@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Not found</title>
+<meta name="description" content="Page not found.">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="Not found">
+<meta property="og:description" content="Page not found.">
+<meta property="og:type" content="website">
+<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/inter-ui/4.1.1/variable/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232a78d6'/><text x='50' y='70' font-size='58' font-family='Helvetica,Arial' font-weight='bold' fill='white' text-anchor='middle'>A</text></svg>">
+<script>
+/* Set the theme before first paint so there is no flash. */
+(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
+</head>
+<body>
+<header class="top">
+  <div class="bar">
+    <a class="brand" href="index.html">Alex Rajcoomar <span>· portfolio</span></a>
+    <nav class="main">
+      <a href="index.html">Home</a>
+      <a href="library.html">Library</a>
+      <a href="about.html">About</a>
+      <button class="themetoggle" type="button" id="themebtn" aria-label="Switch between light and dark">◐</button>
+    </nav>
+  </div>
+</header>
+<main>
+<div class="hero shell" style="border:0">
+  <p class="eyebrow">404</p>
+  <h1 class="display" style="font-size:clamp(2rem,4.5vw,3rem)">That page is not here.</h1>
+  <p class="lede">It may have been renamed. The library has everything.</p>
+  <p style="margin-top:2rem"><a class="kind kind-App" href="library.html" style="text-decoration:none;font-size:.875rem;padding:.5rem .9rem">Go to the library</a></p>
+</div>
+</main>
+<footer class="site">
+  <div class="shell bar">
+    <span>© 2026 Leesharam Alexander Rajcoomar</span>
+    <span class="right"><a href="library.html">Library</a> · <a href="about.html">About</a></span>
+  </div>
+</footer>
+<script>
+document.getElementById('themebtn').addEventListener('click',function(){
+  var el=document.documentElement, cur=el.getAttribute('data-theme');
+  if(!cur){
+    cur=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
+  }
+  var next=(cur==='dark')?'light':'dark';
+  el.setAttribute('data-theme',next);
+  try{localStorage.setItem('theme',next);}catch(e){}
+});
+</script>
+</body>
+</html>

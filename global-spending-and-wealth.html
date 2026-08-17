@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Global Spending and Wealth: Scale, Structure, Concentration</title>
+<meta name="description" content="A fixed-unit data essay. One square is one trillion US dollars, declared once and never rescaled. Every number carries the provenance tag it was published under.">
+<meta name="color-scheme" content="light dark">
+
+<!-- Preloaded so the variable face arrives before first paint rather than
+     swapping under the apparatus rail. Verified on cdnjs at 4.1.1. -->
+<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/inter-ui/4.1.1/variable/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+
+<!-- ============================================================
+     CRITICAL CSS. Everything the first screen needs, in <head>.
+     Hero markup follows immediately; the one script sits at the end
+     of <body>. One file, so nothing paints until the whole document
+     arrives: keep it small.
+     ============================================================ -->
+<style>
+@font-face{
+  font-family:"InterVar";
+  font-style:normal;
+  font-weight:100 900;
+  font-display:swap;
+  src:url("https://cdnjs.cloudflare.com/ajax/libs/inter-ui/4.1.1/variable/InterVariable.woff2") format("woff2");
+}
+/* Metric-matched fallback, so the apparatus rail does not reflow when the
+   variable face lands. size-adjust brings Arial's x-height up to Inter's;
+   the overrides pin the line box. Approximate by design, and it removes
+   the jump that a bare system stack causes. */
+@font-face{
+  font-family:"InterFallback";
+  font-style:normal;
+  font-weight:100 900;
+  src:local("Helvetica Neue"),local("Arial"),local("Liberation Sans");
+  size-adjust:107%;
+  ascent-override:90%;
+  descent-override:22%;
+  line-gap-override:0%;
+}
+
+/* ------------------------------------------------------------------
+   TOKENS. Copied verbatim from the design specification, section 5,
+   including the dark-mode scope. Validator output, not taste.
+   ------------------------------------------------------------------ */
+.viz-root {
+  color-scheme: light;
+  --surface-1:      #fcfcfb;   /* chart surface */
+  --page:           #f9f9f7;
+  --text-primary:   #0b0b0b;   /* 4.5:1 minimum for all text */
+  --text-secondary: #52514e;
+  --text-muted:     #898781;   /* axis and tick labels */
+  --gridline:       #e1e0d9;   /* solid hairline, never dashed */
+  --baseline:       #c3c2b7;
+
+  --consumption:    #2a78d6;   /* slot 1, blue   : 56.59% of GDP */
+  --government:     #eb6834;   /* slot 2, orange : 16.70% */
+  --investment:     #1baf7a;   /* slot 3, aqua   : 26.29% */
+  --netexports:     #4a3aa7;   /* slot 7, violet : Marimekko stacks ONLY */
+
+  /* sequential, magnitude only. Validated --ordinal, light end clears 2:1 */
+  --seq-1: #86b6ef; --seq-2: #3987e5; --seq-3: #256abf; --seq-4: #184f95;
+
+  /* diverging, blue↔red, neutral grey midpoint. All-pairs PASS */
+  --div-low: #2a78d6; --div-mid: #f0efec; --div-high: #e34948;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) .viz-root {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --consumption: #3987e5; --government: #d95926;
+    --investment: #199e70; --netexports: #9085e9;
+    --seq-1: #cde2fb; --seq-2: #86b6ef; --seq-3: #3987e5; --seq-4: #184f95;
+    --div-low: #3987e5; --div-mid: #383835; --div-high: #e66767;
+  }
+}
+/* The same dark values under a [data-theme] scope, as the specification
+   requires, so a manual control wins in both directions. */
+:root[data-theme="dark"] .viz-root {
+  color-scheme: dark;
+  --surface-1: #1a1a19; --page: #0d0d0d;
+  --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+  --gridline: #2c2c2a; --baseline: #383835;
+  --consumption: #3987e5; --government: #d95926;
+  --investment: #199e70; --netexports: #9085e9;
+  --seq-1: #cde2fb; --seq-2: #86b6ef; --seq-3: #3987e5; --seq-4: #184f95;
+  --div-low: #3987e5; --div-mid: #383835; --div-high: #e66767;
+}
+
+/* ------------------------------------------------------------------
+   THE UNIT AND THE THREE RAILS.
+
+   One square is 20px with a 2px surface gap, so one trillion dollars
+   occupies a 22px cell of area in every figure, at every breakpoint,
+   in print. The unit never rescales. What the specification fixes is
+   the unit, not the page: the drawing rail is 264px wide and the
+   other two rails carry the apparatus and the argument.
+
+   One line of apparatus type is one square row: line-height is the
+   pitch, so the annotation stays locked to the grid it describes
+   without being trapped inside the drawing.
+   ------------------------------------------------------------------ */
+.viz-root{
+  --cell:20px; --gap:2px; --pitch:22px; --cols:12;
+  --blockw:264px;      /* 12 × 22px, clears a 320px viewport */
+  --rail-draw:300px;   /* 264px of drawing + a 36px leader gutter */
+  /* Capped in px as well as set in rem. The rem value is what the rails
+     want; the px cap is what stops the apparatus column from eating the
+     prose column when a user stylesheet enlarges the root font without
+     tripping the rem breakpoints below. Without the cap the prose gets
+     crushed to 128px at a 200% root and long words break the page. */
+  --rail-app:min(13rem, 216px);
+  --rail-prose:min(32rem, 512px);
+  --rail-gap:2rem;
+  --measure:34rem;
+  --stick:5.25rem;
+}
+
+/* ---------------------------- page ---------------------------- */
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  /* One continuous measured field. No cards, so every mark sits on the
+     surface its contrast was validated against. */
+  background:var(--surface-1);
+  color:var(--text-primary);
+  font-family:"InterVar","InterFallback",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  /* rem, not px: an absolute body size means text-only resize scales some
+     of the page and not the rest, which is the 1.4.4 hazard. Everything
+     here is root-relative, so 200% text resize scales uniformly and the
+     rem-based breakpoints below collapse the rails to match. */
+  font-size:1.0625rem;
+  line-height:1.55;
+  font-variant-numeric:proportional-nums;
+}
+.wrap{max-width:76rem;margin:0 auto;padding:0 1.5rem 7rem}
+.col{max-width:var(--measure)}
+h1,h2,h3{line-height:1.16;margin:0 0 .5rem;font-weight:640;letter-spacing:-.014em}
+h1{font-size:clamp(2rem,5.4vw,3.3rem);letter-spacing:-.026em;max-width:30ch}
+h2{font-size:clamp(1.35rem,3vw,1.8rem)}
+h3{font-size:1.02rem;font-weight:660}
+p{margin:0 0 1rem;max-width:var(--measure)}
+ol{max-width:var(--measure);padding-left:1.3rem}
+li{margin-bottom:.75rem}
+a{color:inherit;text-underline-offset:.15em}
+strong{font-weight:650}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.95em}
+.lede{font-size:1.14rem;color:var(--text-secondary);max-width:38rem}
+.kicker{font-size:.82rem;letter-spacing:.09em;text-transform:uppercase;color:var(--text-secondary);margin:0 0 .6rem;font-weight:600}
+.small{font-size:.88rem;color:var(--text-secondary)}
+.num{font-variant-numeric:tabular-nums}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+
+/* THE DISPLAY TIER. Spent once per figure. Proportional figures, because
+   tabular digits at display size read loose. The big number is the claim;
+   the 12px apparatus beside it is the doubt. */
+.display{
+  font-size:clamp(3.1rem,6.6vw,5rem);
+  line-height:calc(var(--pitch) * 4);
+  font-weight:760;letter-spacing:-.03em;
+  font-variant-numeric:proportional-nums;
+  margin:0 0 .25rem;max-width:none
+}
+.display-sm{
+  font-size:clamp(1.5rem,3.4vw,1.95rem);
+  line-height:calc(var(--pitch) * 2);
+  font-weight:680;letter-spacing:-.02em;margin:0 0 .35rem;max-width:22ch
+}
+.display-note{font-size:.9rem;color:var(--text-secondary);margin:0;max-width:26rem}
+
+/* masthead */
+header.mast{padding:4rem 0 1.25rem;border-bottom:1px solid var(--gridline);margin-bottom:3rem}
+.masthead-bar{display:flex;gap:1rem;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+.themelink{
+  font:inherit;font-size:.88rem;color:var(--text-secondary);
+  background:none;border:0;padding:0;cursor:pointer;
+  text-decoration:underline;text-underline-offset:.2em
+}
+.themelink:hover{color:var(--text-primary)}
+.themelink:focus-visible{outline:2px solid var(--text-primary);outline-offset:3px}
+
+/* ------------------------- figures, uncontained -------------------------
+   No card, no border, no radius, no shadow. A hairline rule and vertical
+   space separate figures; the figure number is a folio in the margin. */
+figure.fig{margin:0;padding:0 0 1rem}
+figure.fig + hr.rule,section + hr.rule{border:0;border-top:1px solid var(--gridline);margin:3.25rem 0 3rem}
+.fig-head{display:grid;grid-template-columns:3.25rem minmax(0,1fr);gap:0 1rem;margin-bottom:1.75rem}
+.folio{
+  grid-column:1;font-size:1.35rem;font-weight:420;letter-spacing:-.01em;
+  color:var(--text-secondary);margin:0;font-variant-numeric:tabular-nums;
+  line-height:1.32
+}
+.fig-title{grid-column:2;font-size:clamp(1.35rem,3vw,1.8rem);font-weight:660;letter-spacing:-.018em;margin:0 0 .5rem;max-width:30ch}
+.fig-look{grid-column:2;font-size:1rem;color:var(--text-secondary);margin:0;max-width:36rem}
+.fig-look b{color:var(--text-primary);font-weight:640}
+figcaption{font-size:.88rem;color:var(--text-secondary);margin-top:1.25rem;max-width:34rem}
+
+/* THREE RAILS: drawing (fixed, never scaled), apparatus, prose. */
+.rails,.rung{
+  display:grid;
+  grid-template-columns:var(--rail-draw) minmax(0,var(--rail-app)) minmax(0,var(--rail-prose));
+  column-gap:var(--rail-gap);
+  align-items:start;
+}
+.rung{margin-bottom:2.5rem}
+.rung:last-child{margin-bottom:0}
+.d-rail{grid-area:1/1}
+.a-rail{grid-area:1/2}
+.p-rail{grid-area:1/3}
+/* the prose tracks the drawing instead of terminating at the top of it */
+.a-rail,.p-rail{position:sticky;top:var(--stick);align-self:start;overflow-wrap:break-word}
+
+/* The hero's drawing rail is 512px, because at this unit the wealth square
+   is 500.57px on a side. It gets its own template so it never overflows
+   into the apparatus rail. */
+.rails-hero{grid-template-columns:512px minmax(0,var(--rail-app)) minmax(0,1fr)}
+
+@media (max-width:74rem){
+  .rails,.rung{grid-template-columns:var(--rail-draw) minmax(0,var(--rail-app))}
+  .rails-hero{grid-template-columns:512px minmax(0,var(--rail-app))}
+  .p-rail{grid-area:2/1/auto/3;position:static;max-width:var(--measure);margin-top:1.5rem}
+}
+@media (max-width:56rem){
+  /* below this the hero drops to one column: drawing, then apparatus,
+     then prose, in DOM order */
+  .rails-hero{grid-template-columns:minmax(0,512px)}
+  .rails-hero > .a-rail,.rails-hero > .p-rail{grid-area:auto;position:static;max-width:var(--measure)}
+  /* once the hero is one column the claim flows below the drawing rather
+     than sitting inside it, which is also what keeps the display number
+     from outgrowing its box under text-only resize */
+  .hero-claim{position:static;width:auto;padding:0;margin-top:1.25rem}
+}
+@media (max-width:34rem){
+  /* the outer square is 500px at this unit and the viewport is not: the
+     one contained pan in the piece, rather than rescaling the unit */
+  .hero-scroll{overflow-x:auto;overscroll-behavior-x:contain;padding-bottom:.75rem}
+}
+@media (max-width:38rem){
+  .wrap{padding-left:.75rem;padding-right:.75rem}
+  .rails,.rung{grid-template-columns:minmax(0,1fr);row-gap:.75rem}
+  .a-rail{grid-area:1/1;position:static;max-width:var(--measure)}
+  .d-rail{grid-area:2/1}
+  .p-rail{grid-area:3/1;margin-top:.5rem}
+  .rails-hero > .d-rail,.rails-hero > .a-rail,.rails-hero > .p-rail{grid-area:auto}
+  .fig-head{grid-template-columns:minmax(0,1fr)}
+  .folio{grid-column:1;margin-bottom:.25rem}
+  .fig-title,.fig-look{grid-column:1}
+}
+
+/* The drawing is never scaled: fixed px width, no percentage cap, because
+   a cap would quietly rescale the unit on a narrow screen. */
+svg.draw{display:block;width:300px;height:auto}
+svg.draw.hero{width:512px}
+
+/* THE APPARATUS RAIL. One line of type = one square row. */
+.a-rail{font-size:.86rem;line-height:var(--pitch)}
+.a-name{font-weight:660;color:var(--text-primary);margin:0}
+.a-val{
+  font-weight:680;font-size:1.05rem;font-variant-numeric:tabular-nums;
+  margin:0;line-height:var(--pitch)
+}
+.a-tag{display:flex;gap:.4rem;align-items:center;color:var(--text-secondary);margin:0}
+.a-note{color:var(--text-secondary);margin:0}
+.a-rule{border:0;border-top:1px solid var(--gridline);margin:calc(var(--pitch) / 2) 0}
+.a-op{color:var(--text-secondary);margin:0;font-variant-numeric:tabular-nums;font-size:.82rem;line-height:calc(var(--pitch) - 4px)}
+
+/* MARKS. Geometry, not hue, separates a stock from a flow: stocks are open
+   cells, flows are solid, at the identical pitch. Three categorical colours
+   for components; violet only in Marimekko stacks, absent here. */
+.ink{fill:var(--text-secondary)}          /* 7.73:1 light, 9.72:1 dark */
+.ink-open{stroke:var(--text-secondary);fill:none}
+.c-con{fill:var(--consumption)}           /* household consumption, from F4 */
+.c-gov{fill:var(--government)}            /* 3.12:1 light, 4.48:1 dark */
+.c-inv{fill:var(--investment)}            /* 2.74:1 light: direct label required */
+.rule-h{stroke:var(--gridline);stroke-width:1}    /* decorative, solid, never dashed */
+.leader{stroke:var(--text-secondary);stroke-width:1;fill:none}
+.tick{stroke:var(--text-secondary);stroke-width:1}
+.ring{stroke:var(--surface-1);stroke-width:4;fill:none}
+
+/* focusable data groups: the halo fires on plain :focus so an indicator
+   always exists, with an outline added where SVG :focus-visible works */
+[data-pt]{cursor:default}
+[data-pt]:focus .halo,[data-pt].pinned .halo{opacity:1}
+[data-pt]:focus-visible{outline:3px solid var(--text-primary);outline-offset:4px}
+.halo{opacity:0;fill:none;stroke:var(--text-primary);stroke-width:2}
+@media (hover:hover){ [data-pt]:hover .halo{opacity:1} }
+
+/* hero: the grid resolves into the flat field once, on first view */
+.hero-stage{position:relative}
+.hero-flat{opacity:0}
+.hero-flat,.hero-grid{transition:opacity .6s ease}
+.js .hero-stage.pre .hero-flat{opacity:1}
+.js .hero-stage.pre .hero-grid{opacity:0}
+/* The claim sits in the strip of the outer square above the inner one:
+   500px wide and 261px tall, so the display number has room to be large
+   without being clipped. Surface-coloured plate, so text on the open grid
+   still clears 4.5:1. */
+.hero-claim{
+  position:absolute;left:14px;top:16px;width:322px;
+  background:var(--surface-1);padding:.3rem .8rem .55rem
+}
+
+/* THE ODOMETER. The moving reference marker the specification asked for.
+   Full width, large tabular figures, on screen throughout the ladder. */
+.odo{
+  position:sticky;top:0;z-index:6;
+  background:var(--surface-1);
+  border-bottom:1px solid var(--text-secondary);
+  padding:.5rem 0 .55rem;margin:0 0 1.75rem
+}
+.odo-main{
+  margin:0;display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap;
+  max-width:none
+}
+.odo-fig{
+  font-size:clamp(1.7rem,4vw,2.5rem);font-weight:720;letter-spacing:-.025em;
+  font-variant-numeric:tabular-nums;line-height:1.05
+}
+.odo-sub{font-size:.86rem;color:var(--text-secondary);font-variant-numeric:tabular-nums}
+.odo-anchor{margin:.15rem 0 0;font-size:.94rem;max-width:52rem}
+.odo-anchor b{font-weight:640}
+
+/* tooltip: tappable, keyboard-reachable, and never the only route to the
+   content, which is also in the aria-label, the apparatus and the table */
+.tip{
+  position:absolute;z-index:7;width:19rem;max-width:calc(100vw - 2rem);
+  background:var(--surface-1);color:var(--text-primary);
+  border:1px solid var(--text-secondary);
+  padding:.6rem .75rem;font-size:.88rem;line-height:1.45;
+  box-shadow:0 8px 26px rgba(0,0,0,.17);
+  opacity:0;visibility:hidden;transition:opacity .12s linear
+}
+.tip.on{opacity:1;visibility:visible}
+.tip b{display:block;margin-bottom:.15rem}
+.tip .op{margin-top:.4rem;font-variant-numeric:tabular-nums;color:var(--text-secondary)}
+
+/* -------------------- provenance glyph system -------------------- */
+.gl{width:14px;height:14px;flex:none;vertical-align:-2px}
+.gl-fill{fill:var(--text-primary)}
+.gl-stroke{stroke:var(--text-primary);stroke-width:2;fill:none}
+.gl-knock{fill:var(--surface-1)}
+.gl-lead{stroke:var(--text-primary);stroke-width:1.5;fill:none}
+.prov{display:grid;grid-template-columns:auto 1fr;gap:.5rem .9rem;align-items:start;margin:0 0 1.75rem;max-width:44rem}
+.prov dt{display:flex;gap:.4rem;align-items:center;font-weight:660;font-size:.92rem;white-space:nowrap}
+.prov dd{margin:0 0 .3rem;font-size:.92rem;color:var(--text-secondary)}
+.prov dd em{color:var(--text-primary);font-style:normal;font-weight:600}
+.chip{
+  display:inline-flex;gap:.34rem;align-items:center;
+  font-size:.76rem;font-weight:660;letter-spacing:.02em;
+  border:1px solid var(--baseline);padding:.06rem .34rem;
+  color:var(--text-primary);white-space:nowrap
+}
+.note{
+  border-left:3px solid var(--text-secondary);padding:0 0 0 1rem;
+  margin:0 0 1.5rem;font-size:.94rem;max-width:42rem
+}
+.note h3{margin:0 0 .3rem;font-size:.96rem}
+.note p{max-width:none}
+.note p:last-child{margin-bottom:0}
+
+/* ---------------------------- tables ---------------------------- */
+details.tv{margin-top:1.5rem;border-top:1px solid var(--gridline);padding-top:.7rem}
+details.tv summary{font-size:.9rem;font-weight:640;cursor:pointer;padding:.25rem 0}
+details.tv summary:focus-visible{outline:2px solid var(--text-primary);outline-offset:3px}
+.tw{overflow-x:auto;margin-top:.8rem}
+table{border-collapse:collapse;font-size:.86rem;min-width:100%}
+caption{text-align:left;font-size:.86rem;color:var(--text-secondary);padding-bottom:.5rem}
+th,td{text-align:left;vertical-align:top;padding:.4rem .7rem .4rem 0;border-bottom:1px solid var(--gridline)}
+th{font-weight:660;white-space:nowrap}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* reveal on view. The static default is visible, so the piece reads with
+   JavaScript disabled; .js opts in to the motion. */
+.js .rise{opacity:0;transform:translateY(10px);transition:opacity .5s ease,transform .5s ease}
+.js .rise.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  .js .rise{opacity:1;transform:none;transition:none}
+  .hero-flat,.hero-grid,.tip{transition:none}
+  html{scroll-behavior:auto}
+}
+
+/* ------------------------------ print ------------------------------ */
+@media print{
+  .viz-root{
+    --surface-1:#fff;--page:#fff;--text-primary:#000;--text-secondary:#333;
+    --text-muted:#767676;--gridline:#ccc;--baseline:#999
+  }
+  body{font-size:11pt}
+  .wrap{max-width:none;padding:0}
+  /* release every sticky element and force all steps visible: a scroller
+     prints catastrophically by default */
+  .odo,.a-rail,.p-rail{position:static}
+  .js .rise{opacity:1 !important;transform:none !important}
+  .hero-flat{display:none}
+  .hero-grid{opacity:1 !important}
+  .themelink,.tip{display:none !important}
+  .rung,figure.fig{break-inside:avoid;page-break-inside:avoid}
+  tr,td,th{break-inside:avoid}
+  details.tv::details-content{content-visibility:visible;block-size:auto}
+}
+</style>
+</head>
+
+<body class="viz-root">
+
+<!-- Reusable defs. One <rect> with a <pattern> fill draws any number of
+     unit squares in O(1) elements: 517.7 squares cost three nodes, stay
+     crisp at any zoom, and print. Stocks are open cells, flows solid. -->
+<svg aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
+  <defs>
+    <pattern id="u-stock" width="22" height="22" patternUnits="userSpaceOnUse"><rect x="1" y="1" width="18" height="18" rx="2" stroke-width="2" class="ink-open"/></pattern>
+    <pattern id="u-flow"  width="22" height="22" patternUnits="userSpaceOnUse"><rect width="20" height="20" rx="2" class="ink"/></pattern>
+    <pattern id="u-inv"   width="22" height="22" patternUnits="userSpaceOnUse"><rect width="20" height="20" rx="2" class="c-inv"/></pattern>
+    <pattern id="u-gov"   width="22" height="22" patternUnits="userSpaceOnUse"><rect width="20" height="20" rx="2" class="c-gov"/></pattern>
+    <!-- hatch marks a derived range. Continuous strokes inside the tile:
+         a texture, not a dashed line. The dash channel stays unused. -->
+    <pattern id="h-gov" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke-width="2.5" style="stroke:var(--government)"/>
+    </pattern>
+
+    <symbol id="g-ver" viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10" rx="1.5" class="gl-fill"/></symbol>
+    <symbol id="g-est" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" class="gl-stroke"/><rect x="4" y="4" width="6" height="6" rx="1" class="gl-fill"/></symbol>
+    <symbol id="g-proj" viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10" rx="1.5" class="gl-stroke"/></symbol>
+    <symbol id="g-der" viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" rx="1.5" class="gl-fill"/><rect x="4" y="6.4" width="6" height="1.6" class="gl-knock"/><rect x="6.2" y="3.2" width="1.8" height="1.8" class="gl-knock"/><rect x="6.2" y="9.2" width="1.8" height="1.8" class="gl-knock"/></symbol>
+    <symbol id="g-low" viewBox="0 0 14 14"><rect x="0" y="3" width="8" height="8" rx="1" class="gl-fill"/><path d="M8 7 H13" class="gl-lead"/><circle cx="13" cy="7" r="1.4" class="gl-fill"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+<header class="mast">
+  <div class="masthead-bar">
+    <p class="kicker">A fixed-unit data essay &middot; stage 1, second iteration</p>
+    <button class="themelink" type="button" id="themebtn" aria-pressed="false">Dark mode</button>
+  </div>
+  <h1>Global Spending and Wealth: Scale, Structure, Concentration</h1>
+  <p class="lede">One square is one trillion US dollars. The unit is declared once and never rescaled: not between figures, not on a phone, not in print. Findings are in the wide column; every doubt about them is in the apparatus rail beside the drawing.</p>
+  <p class="small">Every number comes from <em>Global Spending and Wealth: Scale, Structure, Concentration</em>, compiled 17 August 2026, at the precision it published, with its tag intact.</p>
+</header>
+
+<!-- ============================== F1 ============================== -->
+<figure class="fig" id="F1">
+  <div class="fig-head">
+    <p class="folio">F1</p>
+    <h2 class="fig-title" id="f1-title">The world owns four and a third times what it earns in a year</h2>
+    <p class="fig-look" id="f1-look">The open square is the stock of personal wealth. The solid one inside it is everything the world produced in 2025. Open cells are stocks and solid cells are flows, everywhere in this piece.</p>
+  </div>
+
+  <div class="rails rails-hero">
+    <div class="d-rail hero-scroll">
+      <div class="hero-stage" id="hero-stage">
+      <svg class="draw hero" viewBox="0 0 512 514" width="512" role="graphics-document"
+           aria-labelledby="f1-title f1-look" aria-describedby="f1-desc" id="f1-svg">
+        <g data-pt="f1-wealth" role="graphics-object" tabindex="0"
+           aria-label="The outer open square: total global personal wealth across 56 markets, approximately 517.7 trillion US dollars, reference year 2025. Tagged derived and low confidence. Drawn as 517.7 open cells of area. Operation: UBS publishes no global total, so this is the sum of its four pyramid bands, 3.22 plus 63.16 plus 200.72 plus 250.59, which is 517.69 trillion."
+           data-tip-title="Personal wealth &asymp; $517.7 tn"
+           data-tip-body="2025. UBS Global Wealth Report 2026, 56 markets covering &ldquo;over 92% of the world&rsquo;s wealth.&rdquo; A stock, so the cells are open."
+           data-tip-op="DERIVED: 3.22 + 63.16 + 200.72 + 250.59 = 517.69 tn. LOW CONFIDENCE: UBS publishes no global total sentence.">
+          <rect class="hero-flat" x="0" y="5.43" width="500.57" height="500.57" style="fill:var(--gridline)"/>
+          <rect class="hero-grid" x="0" y="5.43" width="500.57" height="500.57" fill="url(#u-stock)"/>
+          <rect x="0" y="5.43" width="500.57" height="500.57" class="halo"/>
+        </g>
+        <g data-pt="f1-gdp" role="graphics-object" tabindex="0"
+           aria-label="The inner solid square: world GDP, nominal, current US dollars, 118.35 trillion in 2025. Verified from the World Bank, which labels the 2025 value an estimate. Drawn as 118.35 solid cells of area, on the same lattice, sharing the bottom-left corner. Area ratio 4.37; the square root of that, 2.09, is the linear side ratio."
+           data-tip-title="World GDP $118.35 tn"
+           data-tip-body="2025, nominal, current US$. World Bank NY.GDP.MKTP.CD, last updated 2026-07-13. A flow, so the cells are solid."
+           data-tip-op="Area ratio 517.7 / 118.35 = 4.37. Side ratio &radic;4.37 = 2.09.">
+          <rect class="hero-flat" x="0" y="266.66" width="239.34" height="239.34" style="fill:var(--baseline)"/>
+          <rect class="hero-grid" x="0" y="266.66" width="239.34" height="239.34" fill="url(#u-flow)"/>
+          <path d="M0 266.66 H239.34 V506" class="ring"/>
+          <rect x="0" y="266.66" width="239.34" height="239.34" class="halo"/>
+        </g>
+      </svg>
+      <div class="hero-claim">
+        <p class="display">4.37&times;</p>
+        <p class="display-note">The stock, over a year of the flow.</p>
+      </div>
+      </div>
+    </div>
+
+    <div class="a-rail">
+      <p class="a-name">Personal wealth</p>
+      <p class="a-val">&asymp; $517.7 tn</p>
+      <p class="a-tag"><svg class="gl" aria-hidden="true"><use href="#g-der"/></svg> derived</p>
+      <p class="a-tag"><svg class="gl" aria-hidden="true"><use href="#g-low"/></svg> low confidence</p>
+      <p class="a-note">2025 &middot; UBS bands</p>
+      <p class="a-op">3.22 + 63.16 + 200.72<br>+ 250.59 = 517.69</p>
+      <hr class="a-rule">
+      <p class="a-name">World GDP</p>
+      <p class="a-val">$118.35 tn</p>
+      <p class="a-tag"><svg class="gl" aria-hidden="true"><use href="#g-ver"/></svg> verified</p>
+      <p class="a-tag"><svg class="gl" aria-hidden="true"><use href="#g-est"/></svg> source&rsquo;s estimate</p>
+      <p class="a-note">2025 &middot; nominal, current US$</p>
+      <p class="a-note">World Bank, 2026-07-13</p>
+      <hr class="a-rule">
+      <p class="a-note">Linear side ratio 2.09, or &radic;4.37. Area carries the value, not the side.</p>
+      <p class="a-note">Edge cells are clipped where a side length falls between them. The area is the claim.</p>
+    </div>
+
+    <div class="p-rail">
+      <p id="f1-desc">Both squares are drawn at the unit the whole piece uses, so the outer square is 517.7 cells of area and the inner one is 118.35, on one continuous lattice, sharing a corner. Count them if you like. Nothing is truncated and nothing is on a log scale.</p>
+      <p><strong>A ratio, not a decomposition.</strong> The containment is drawn once, so the relationship never has to appear as two independently scaled y-axes. The World Inequality Lab measures the same phenomenon against a different denominator: wealth-income ratios rose &ldquo;from about 390% of world net domestic product in 1980 to over 625% in 2025&rdquo; &mdash; a different number for a related idea, which is why the two are not plotted together.</p>
+      <p><strong>UBS publishes no global wealth total.</strong> The <span class="num">$517.7 tn</span> is the sum of its four pyramid bands, whose four printed shares reconcile to it exactly. Strong evidence, not a quoted figure, and the report ranks it the second-least-confident claim in the dataset. It is drawn at full strength: fading a derived value lowers the perceived credibility of the whole chart.</p>
+    </div>
+  </div>
+
+  <details class="tv">
+    <summary>Table view, F1, with provenance</summary>
+    <div class="tw">
+    <table>
+      <caption>F1. Every mark, its value, its reference year and its tag.</caption>
+      <thead><tr><th scope="col">Mark</th><th scope="col">Quantity</th><th scope="col">Value</th><th scope="col">Year</th><th scope="col">Provenance</th><th scope="col">Source and operation</th></tr></thead>
+      <tbody>
+        <tr><td>Outer square, open cells</td><td>Total global personal wealth, 56 markets (a stock)</td><td class="n">&asymp; $517.7 tn</td><td class="n">2025</td><td><span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-der"/></svg>DERIVED</span> <span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-low"/></svg>LOW CONFIDENCE</span></td><td>UBS Global Wealth Report 2026, four pyramid bands summed: 3.22 + 63.16 + 200.72 + 250.59. UBS publishes no global total.</td></tr>
+        <tr><td>Inner square, solid cells</td><td>World GDP, nominal, current US$ (a flow)</td><td class="n">$118.35 tn</td><td class="n">2025</td><td><span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-ver"/></svg>VERIFIED</span> <span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-est"/></svg>(est.)</span></td><td>World Bank <code>NY.GDP.MKTP.CD</code>, lastupdated 2026-07-13. The source labels 2025 an estimate.</td></tr>
+        <tr><td>Display number</td><td>Personal wealth as a multiple of world nominal GDP</td><td class="n">4.37&times;</td><td class="n">2025</td><td><span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-der"/></svg>DERIVED</span></td><td>517.7 / 118.35. Quoted in the report as 4.37&times;.</td></tr>
+        <tr><td>Drawing geometry</td><td>Linear side ratio of the two squares</td><td class="n">2.09</td><td>&mdash;</td><td><span class="chip">ARTIFACT GEOMETRY</span></td><td>&radic;4.37. A property of the drawing, not a claim about the world.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </details>
+
+  <figcaption>Title corrected from the specification&rsquo;s &ldquo;four and a half times&rdquo; on the review&rsquo;s instruction; 4.37&times; is four and a third. Recorded as deviation 1 at the foot of the page.</figcaption>
+</figure>
+
+<hr class="rule">
+
+<!-- ===================== PROVENANCE LEGEND ===================== -->
+<section id="provenance">
+  <p class="kicker">Read this before the figures</p>
+  <h2>Two mark geometries, five provenance states</h2>
+  <p class="col" style="max-width:42rem">Nothing on this page is faded. A stock is an open cell and a flow is a solid cell, at the identical pitch, so the two kinds of quantity are told apart by shape rather than by two brightnesses of the same grey. Provenance rides on top of that in five discrete states, each with its own glyph shape and its own word.</p>
+
+  <dl class="prov">
+    <dt><svg class="gl" aria-hidden="true"><use href="#g-ver"/></svg> VERIFIED</dt>
+    <dd>Solid filled glyph at full contrast, the unmarked default. <em>Retrieved from the named source, with a verbatim fragment on file.</em></dd>
+
+    <dt><svg class="gl" aria-hidden="true"><use href="#g-est"/></svg> (est.)</dt>
+    <dd>Filled, plus an open ring &mdash; a shape, not a colour. <em>The source itself labels the value an estimate.</em> World GDP for 2025 is one of these.</dd>
+
+    <dt><svg class="gl" aria-hidden="true"><use href="#g-proj"/></svg> (proj.)</dt>
+    <dd>Open glyph inside a tinted future region, with a boundary rule and a text label. <em>The source itself labels the value a projection.</em> First appears at F11.</dd>
+
+    <dt><svg class="gl" aria-hidden="true"><use href="#g-der"/></svg> DERIVED</dt>
+    <dd>Filled, plus an arithmetic glyph, and the operation printed in the apparatus rail rather than hidden in a tooltip. <em>Arithmetic on verified inputs. Not a published number.</em></dd>
+
+    <dt><svg class="gl" aria-hidden="true"><use href="#g-low"/></svg> LOW CONFIDENCE</dt>
+    <dd>Filled, plus a leader to a written reason. <em>Single-sourced, internally inconsistent, or dependent on a fragile extraction.</em> Never faded, never dropped.</dd>
+  </dl>
+
+  <p class="small col" style="max-width:42rem">No tier is distinguished by colour alone: each carries a glyph shape and a spelled word, so all five survive greyscale and every form of colour-vision deficiency. The states are discrete rather than a gradient, and the order above is <em>retrieval distance</em>, not reliability &mdash; derived arithmetic on verified inputs can be sounder than a source&rsquo;s own projection.</p>
+
+  <div class="note">
+    <h3>Base years, and the 2025 hole in the middle of this dataset</h3>
+    <p>The latest complete world expenditure decomposition is <strong>2024, not 2025</strong>. The World Bank publishes 2025 GDP for the world but leaves consumption, government consumption and capital formation null for the United States, China and Japan, and therefore for the world, North America, East Asia and Pacific, and the high-income and upper-middle-income aggregates. No series here crosses that hole. Where a later figure&rsquo;s axis reaches 2025, the gap is drawn as a gap and labelled as one.</p>
+    <p>Base years never share a quantitative axis. Military spending is 2025; health and education are 2022; world nominal GDP grew about 15% across that gap, from $102.9 tn to $118.4 tn. Those three arrive as small multiples with the year in each panel title.</p>
+  </div>
+
+  <div class="note">
+    <h3>Colour, fixed for the whole piece</h3>
+    <p><strong>Household consumption is blue, government is orange, investment is aqua</strong>, and they never swap, so by the third figure the legend stops being necessary. Aqua sits at 2.74:1 against this surface, below the 3:1 gate, so every aqua mark carries a visible direct label. Totals and stocks that are not one component are drawn in neutral ink, so no categorical hue is ever spent on an aggregate. Violet is permitted only inside the Marimekko stacks at F4, because violet against blue collapses to &Delta;E 1.9 under protanopia in dark mode wherever marks are not adjacent.</p>
+  </div>
+
+  <div class="note">
+    <h3>Geometry is not data</h3>
+    <p>Square counts, gutter ticks and the odometer are properties of the drawing: arithmetic on the unit, labelled as such. Every <em>figure about the world</em> appears in the source report, at the precision the report used, with its tag. Nothing is interpolated, nothing is rounded into a rounder-sounding number, and no series is completed by filling a gap. Where the report says a figure does not exist, this piece says so too.</p>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ============================== F2 ============================== -->
+<figure class="fig" id="F2">
+  <div class="fig-head">
+    <p class="folio">F2</p>
+    <h2 class="fig-title" id="f2-title">One square is one trillion dollars. Nothing on this page is rescaled.</h2>
+    <p class="fig-look" id="f2-look">Twelve squares to a row, twenty pixels each, on every screen and in print. A year of world output is <b>118 whole squares and one filled 35% of the way</b>.</p>
+  </div>
+
+  <div class="rails" style="margin-bottom:2.25rem">
+    <div class="d-rail">
+      <svg class="draw" viewBox="0 0 300 44" width="300" role="graphics-document"
+           aria-labelledby="f2-title" aria-describedby="f2-unitdesc" id="f2-unit">
+        <g role="graphics-object" aria-label="The unit: one solid cell, twenty pixels on a side, is one trillion US dollars.">
+          <rect x="0" y="12" width="20" height="20" rx="2" class="ink"/>
+        </g>
+      </svg>
+    </div>
+    <div class="a-rail">
+      <p class="a-name">The unit</p>
+      <p class="a-note">20 px square, 2 px gap,<br>22 px pitch. Fixed.</p>
+    </div>
+    <div class="p-rail">
+      <p class="display">$1 trillion</p>
+      <p class="display-note" id="f2-unitdesc">One cell. There is no control anywhere on this page for changing that rate, and there will not be one: a reader who can dial the dollars-per-square away can dial the discomfort away with it.</p>
+    </div>
+  </div>
+
+  <div class="rails">
+    <div class="d-rail">
+      <svg class="draw rise" viewBox="0 0 300 232" width="300" role="graphics-document"
+           aria-labelledby="f2-title f2-look" aria-describedby="f2-desc" id="f2-svg">
+        <g data-pt="f2-gdp" role="graphics-object" tabindex="0"
+           aria-label="World GDP 2025: 118.35 trillion US dollars, drawn as nine full rows of twelve solid cells, then ten cells, then one cell filled 35 per cent. Verified from the World Bank, which labels 2025 an estimate."
+           data-tip-title="World GDP $118.35 tn"
+           data-tip-body="2025, nominal, current US$. World Bank NY.GDP.MKTP.CD. Nine rows of twelve is 108 squares; ten more and 0.35 of one completes the year."
+           data-tip-op="VERIFIED (est. for 2025). Vintage 2026-07-13.">
+          <rect x="0" y="0"   width="264" height="198" fill="url(#u-flow)"/>
+          <rect x="0" y="198" width="220" height="22"  fill="url(#u-flow)"/>
+          <rect x="220" y="198" width="7" height="20" rx="2" class="ink"/>
+          <rect x="1" y="1" width="262" height="218" class="halo"/>
+        </g>
+        <path class="leader" d="M229 208 H300"/>
+      </svg>
+    </div>
+    <div class="a-rail">
+      <p class="a-name">World GDP</p>
+      <p class="a-val">$118.35 tn</p>
+      <p class="a-tag"><svg class="gl" aria-hidden="true"><use href="#g-ver"/></svg> verified</p>
+      <p class="a-tag"><svg class="gl" aria-hidden="true"><use href="#g-est"/></svg> source&rsquo;s estimate</p>
+      <p class="a-note">2025 &middot; nominal, current US$</p>
+      <p class="a-note">World Bank, 2026-07-13</p>
+      <hr class="a-rule">
+      <p class="a-note">&larr; the last cell is 35% filled. Not $118 tn.</p>
+    </div>
+    <div class="p-rail">
+      <p id="f2-desc">The unit is the argument. A grid of countable cells can be audited by a sceptical reader and read by a general one, which no area-encoded form can claim: a treemap asks you to trust the renderer. It also means no log axis is needed anywhere in this piece and no axis is truncated, because the whole range from <span class="num">$517.7 tn</span> down to <span class="num">$174.3 bn</span> fits one countable system.</p>
+      <p><strong>The unit does not move on a phone.</strong> The fallback is vertical scroll at exactly this cell size, never a simplified chart. Twelve squares to a row is what fits a 320-pixel viewport, so twelve squares to a row is what a desktop gets as well. Fractions of a trillion are drawn as partial cells, and the partial cell is labelled.</p>
+      <p class="small">World GDP on a purchasing-power basis for the same year is <span class="num">Int$211.17 tn</span>, a 1.78&times; gap that sits mostly in emerging Asia. It is a different basis, so it gets its own panels at F12 rather than a second mark here.</p>
+    </div>
+  </div>
+
+  <details class="tv">
+    <summary>Table view, F2, with provenance</summary>
+    <div class="tw">
+    <table>
+      <caption>F2. The unit declaration and the one quantity drawn against it.</caption>
+      <thead><tr><th scope="col">Mark</th><th scope="col">Quantity</th><th scope="col">Value</th><th scope="col">Year</th><th scope="col">Provenance</th><th scope="col">Source and operation</th></tr></thead>
+      <tbody>
+        <tr><td>Single solid cell</td><td>The unit</td><td class="n">$1 tn</td><td>&mdash;</td><td><span class="chip">UNIT DECLARATION</span></td><td>20 px cell, 2 px surface gap, 22 px pitch, 12 cells to a row. Fixed for the whole piece.</td></tr>
+        <tr><td>The block</td><td>World GDP, nominal, current US$</td><td class="n">$118.35 tn</td><td class="n">2025</td><td><span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-ver"/></svg>VERIFIED</span> <span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-est"/></svg>(est.)</span></td><td>World Bank <code>NY.GDP.MKTP.CD</code>, lastupdated 2026-07-13.</td></tr>
+        <tr><td>Cell count</td><td>Cells drawn</td><td class="n">118 whole + 0.35</td><td>&mdash;</td><td><span class="chip">ARTIFACT GEOMETRY</span></td><td>Nine rows of 12 = 108, plus 10, plus 0.35 of one cell.</td></tr>
+        <tr><td>Not drawn</td><td>World GDP, PPP, current international $</td><td class="n">Int$211.17 tn</td><td class="n">2025</td><td><span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-ver"/></svg>VERIFIED</span> <span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-est"/></svg>(est.)</span></td><td>World Bank <code>NY.GDP.MKTP.PP.CD</code>. A different basis; panels at F12.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </details>
+</figure>
+
+<hr class="rule">
+
+<!-- ============================== F3 ============================== -->
+<figure class="fig" id="F3">
+  <div class="fig-head">
+    <p class="folio">F3</p>
+    <h2 class="fig-title" id="f3-title">A ladder, at one unit</h2>
+    <p class="fig-look" id="f3-look">Six magnitudes at the same cell size: a stock, a year of output, a year of capital formation, the state, its militaries, its aid. Nothing here sums. The odometer names what you have scrolled past as you pass it.</p>
+  </div>
+
+  <div class="odo" id="odo">
+    <p class="odo-main">
+      <span class="odo-fig" id="odo-dollars">$0.0 tn</span>
+      <span class="odo-sub">of personal wealth passed &middot; <span id="odo-squares">0.0</span> of 517.7 squares &middot; <span id="odo-row">row 1</span> of 44</span>
+    </p>
+    <p class="odo-anchor" id="odo-anchor">Each cell below is one trillion dollars of personal wealth, 2025. Scroll.</p>
+  </div>
+  <p class="sr-only" aria-live="polite" id="odo-live"></p>
+
+  <div class="rungs" role="graphics-document" aria-labelledby="f3-title f3-look" id="f3-rungs">
+
+    <!-- rung 1: personal wealth, 517.7, a stock, open cells -->
+    <div class="rung">
+      <div class="a-rail">
+        <p class="a-name">Personal wealth</p>
+        <p class="a-val">&asymp; $517.7 tn</p>
+        <p class="a-tag"><svg class="gl" aria-hidden="true"><use href="#g-der"/></svg> derived</p>
+        <p class="a-tag"><svg class="gl" aria-hidden="true"><use href="#g-low"/></svg> low confidence</p>
+        <p class="a-note">2025 &middot; UBS bands</p>
+        <p class="a-note">a stock: open cells</p>
+        <p class="a-op">3.22 + 63.16 + 200.72<br>+ 250.59 = 517.69</p>
+        <hr class="a-rule">
+        <p class="a-note">4.37&times; world GDP</p>
+        <p class="a-note">8.19&times; a year of household consumption</p>
+        <p class="a-note">one tick per five rows</p>
+      </div>
+      <div class="d-rail">
+        <svg class="draw" viewBox="0 0 300 968" width="300" id="f3-wealth-svg">
+          <g data-pt="f3-wealth" role="graphics-object" tabindex="0"
+             aria-label="Rung 1, personal wealth, a stock drawn as open cells: approximately 517.7 trillion US dollars, 2025, tagged derived and low confidence. 43 full rows of 12 cells, then one cell and seven tenths. It is 4.37 times world nominal GDP and 8.19 times annual world household consumption. Operation: the four UBS pyramid bands summed; no institution publishes a global total."
+             data-tip-title="Personal wealth &asymp; $517.7 tn"
+             data-tip-body="2025. UBS Global Wealth Report 2026, 56 markets. 4.37&times; world nominal GDP and 8.19&times; annual world household consumption."
+             data-tip-op="DERIVED: 3.22 + 63.16 + 200.72 + 250.59 = 517.69. LOW CONFIDENCE: no published global total.">
+            <rect x="0" y="0"   width="264" height="946" fill="url(#u-stock)"/>
+            <rect x="0" y="946" width="22"  height="22"  fill="url(#u-stock)"/>
+            <rect x="23" y="947" width="12" height="18" rx="2" stroke-width="2" class="ink-open"/>
+            <rect x="1" y="1" width="262" height="966" class="halo"/>
+          </g>
+          <line class="tick" x1="268" y1="110" x2="282" y2="110"/>
+          <line class="tick" x1="268" y1="220" x2="282" y2="220"/>
+          <line class="tick" x1="268" y1="330" x2="282" y2="330"/>
+          <line class="tick" x1="268" y1="440" x2="282" y2="440"/>
+          <line class="tick" x1="268" y1="550" x2="282" y2="550"/>
+          <line class="tick" x1="268" y1="660" x2="282" y2="660"/>
+          <line class="tick" x1="268" y1="770" x2="282" y2="770"/>
+          <line class="tick" x1="268" y1="880" x2="282" y2="880"/>
+        </svg>
+      </div>
+      <div class="p-rail">
+        <p class="display-sm">Most of the picture is wealth.</p>
+        <p>Forty-four rows of it, against ten for a year of everything the world produces. The stock is the only quantity in this dataset that needs its own screenful, and it is the one nobody publishes a total for.</p>
+        <p><strong>It grew by revaluation, not by building.</strong> Personal wealth rose <span class="num">10.8%</span> in 2025 while the world built new fixed capital worth <span class="num">5.5%</span> of the existing stock. New physical capital cannot explain a gain that size; repricing can, and global equity market capitalisation rose <span class="num">18.5%</span> to <span class="num">$151.94 tn</span>. Revaluation gains accrue to whoever already owns the assets.</p>
+        <p class="small">Absent from this rung, and not estimated: global median wealth per adult. UBS publishes medians by market only, so any global figure in circulation is somebody&rsquo;s construction.</p>
+      </div>
+    </div>
+
+    <!-- rung 2: world GDP, 118.35, a flow -->
+    <div class="rung">
+      <div class="a-rail">
+        <p class="a-name">World GDP</p>
+        <p class="a-val">$118.35 tn</p>
+        <p class="a-tag"><svg class="gl" aria-hidden="true"><use href="#g-ver"/></svg> verified</p>
+        <p class="a-tag"><svg class="gl" aria-hidden="true"><use href="#g-est"/></svg> source&rsquo;s estimate</p>
+        <p class="a-note">2025 &middot; nominal, current US$</p>
+        <p class="a-note">a flow: solid cells</p>
+        <p class="a-note">World Bank, 2026-07-13</p>
+      </div>
+      <div class="d-rail">
+        <svg class="draw" viewBox="0 0 300 220" width="300">
+          <g data-pt="f3-gdp" role="graphics-object" tabindex="0"
+             aria-label="Rung 2, world GDP nominal, a flow drawn as solid cells: 118.35 trillion US dollars, 2025, verified and labelled an estimate by the source. Nine full rows of 12 cells, then ten cells and 0.35."
+             data-tip-title="World GDP $118.35 tn"
+             data-tip-body="2025, nominal, current US$. World Bank NY.GDP.MKTP.CD. PPP for the same year is Int$211.17 tn: a different basis, shown separately at F12."
+             data-tip-op="VERIFIED (est. for 2025). Vintage 2026-07-13.">
+            <rect x="0" y="0"   width="264" height="198" fill="url(#u-flow)"/>
+            <rect x="0" y="198" width="220" height="22"  fill="url(#u-flow)"/>
+            <rect x="220" y="198" width="7" height="20" rx="2" class="ink"/>
+            <rect x="1" y="1" width="262" height="218" class="halo"/>
+          </g>
+        </svg>
+      </div>
+      <div class="p-rail">
+        <p><strong>Ten rows is a year of everything.</strong> Every good and service the world produced in 2025, at market exchange rates: <span class="num">$118.35 tn</span>. The stock above it is <span class="num">4.37&times;</span> this block, which is the single most consequential ratio in the dataset and the reason the two are drawn in different cell geometries.</p>
+      </div>
+    </div>
+
+    <!-- rung 3: gross capital formation, 29.36, a flow, aqua -->
+    <div class="rung">
+      <div class="a-rail">
+        <p class="a-name">Gross capital formation</p>
+        <p class="a-val">$29.36 tn</p>
+        <p class="a-tag"><svg class="gl" aria-hidden="true"><use href="#g-ver"/></svg> verified</p>
+        <p class="a-note">2024 &middot; 26.29% of world GDP</p>
+        <p class="a-note">includes inventories</p>
+        <hr class="a-rule">
+        <p class="a-note">gross <em>fixed</em>: $28.61 tn, 25.62%</p>
+        <p class="a-op">29.36 &minus; 28.61 = 0.75, the inventories gap, 0.67% of GDP</p>
+        <p class="a-note">2025 is null for this series</p>
+      </div>
+      <div class="d-rail">
+        <svg class="draw" viewBox="0 0 300 66" width="300">
+          <g data-pt="f3-gcf" role="graphics-object" tabindex="0"
+             aria-label="Rung 3, gross capital formation, a flow drawn as solid aqua cells: 29.36 trillion US dollars in 2024, 26.29 per cent of world GDP, verified. This is the gross measure and includes inventories; gross fixed capital formation alone is 28.61 trillion, 25.62 per cent. The difference of 0.75 trillion, 0.67 per cent of world GDP, is derived. 2025 is null for this series."
+             data-tip-title="Gross capital formation $29.36 tn"
+             data-tip-body="2024, 26.29% of world GDP. World Bank NE.GDI.TOTL.CD. Gross <em>fixed</em> capital formation is $28.61 tn, 25.62%. The two are never mixed."
+             data-tip-op="DERIVED difference: 29.36 &minus; 28.61 = 0.75 tn, which is 0.67% of world GDP. 2025 is null for the world.">
+            <rect x="0" y="0"  width="264" height="44" fill="url(#u-inv)"/>
+            <rect x="0" y="44" width="110" height="22" fill="url(#u-inv)"/>
+            <rect x="110" y="44" width="7.2" height="20" rx="2" class="c-inv"/>
+            <rect x="1" y="1" width="262" height="64" class="halo"/>
+          </g>
+        </svg>
+      </div>
+      <div class="p-rail">
+        <p><strong>Three rows builds everything the world builds.</strong> All the new capital formed on earth in 2024 &mdash; every building, machine, road, data centre and net addition to inventory &mdash; is <span class="num">$29.36 tn</span>, a quarter of a year&rsquo;s output and one fifteenth of the wealth stock above.</p>
+        <p class="small">Aqua marks sit at 2.74:1 against this surface, below the 3:1 gate, so this rung carries its value in the apparatus rail as required. Also absent, and not constructed: the public-versus-private split of world investment. The IMF dataset that builds it consistently returned HTTP 403 on both endpoints.</p>
+      </div>
+    </div>
+
+    <!-- rung 4: general government expenditure, derived range 41 to 42, orange -->
+    <div class="rung">
+      <div class="a-rail">
+        <p class="a-name">General government expenditure</p>
+        <p class="a-val">&asymp; $41 to $42 tn</p>
+        <p class="a-tag"><svg class="gl" aria-hidden="true"><use href="#g-der"/></svg> derived</p>
+        <p class="a-tag"><svg class="gl" aria-hidden="true"><use href="#g-low"/></svg> low confidence</p>
+        <p class="a-note">2024 &middot; &asymp; 37 to 38% of world GDP</p>
+        <p class="a-note"><em>general</em>, not central government</p>
+        <p class="a-op">income-group GDP weights &times; IMF ratios: 42% &times; 64.64%, 32% &times; 28.70%, 22% &times; 6.13%, 18% &times; 0.54%</p>
+        <hr class="a-rule">
+        <p class="a-note">&larr; the hatched cell is the top of the range, 41 &rarr; 42</p>
+        <p class="a-note">on 2025 GDP: &asymp; $43 to $45 tn</p>
+      </div>
+      <div class="d-rail">
+        <svg class="draw" viewBox="0 0 300 88" width="300">
+          <g data-pt="f3-gov" role="graphics-object" tabindex="0"
+             aria-label="Rung 4, general government expenditure, a flow drawn as solid orange cells: approximately 41 to 42 trillion US dollars in 2024, roughly 37 to 38 per cent of world GDP, tagged derived and low confidence. The hatched cell at the end is the top of the derived range. This is general government, not central government: that gap runs 13 to 25 points of GDP. Operation: income-group GDP weights times IMF expenditure ratios of 42, 32, 22 and 18 per cent. Applied to 2025 GDP the same ratio gives approximately 43 to 45 trillion."
+             data-tip-title="General government &asymp; $41 to $42 tn"
+             data-tip-body="2024, &asymp; 37 to 38% of world GDP. The IMF publishes no World row for general government expenditure, so any single figure is somebody&rsquo;s derivation. General government, not central: that gap runs 13 to 25 points of GDP."
+             data-tip-op="DERIVED: income-group GDP weights &times; IMF ratios &mdash; 42% high income (64.64% of world GDP), 32% upper middle (28.70%), 22% lower middle (6.13%), 18% low (0.54%). Applied to 2025 GDP: &asymp; $43 to $45 tn.">
+            <rect x="0" y="0"  width="264" height="66" fill="url(#u-gov)"/>
+            <rect x="0" y="66" width="110" height="22" fill="url(#u-gov)"/>
+            <rect x="110" y="66" width="20" height="20" rx="2" fill="url(#h-gov)" style="stroke:var(--government);stroke-width:1.5"/>
+            <rect x="1" y="1" width="262" height="86" class="halo"/>
+          </g>
+          <path class="leader" d="M132 76 H300"/>
+        </svg>
+      </div>
+      <div class="p-rail">
+        <p><strong>No institution publishes this number.</strong> The IMF prints a World row for the fiscal balance and for debt, so it plainly computes world revenue and expenditure internally, and it declines to print the levels. Two independent retrieval passes established that rather than assumed it. What is drawn is a weighted derivation, roughly <span class="num">37 to 38%</span> of world GDP, as a range rather than a false point estimate and never to a second decimal place.</p>
+        <p>Its floor is verified: government <em>final consumption</em> alone is <span class="num">$18.65 tn</span>, <span class="num">16.70%</span> of world GDP, and that measure excludes transfers, interest, subsidies and public investment, so a total near 37% is coherent. Its ceiling is checked against the Fund&rsquo;s published world deficit of <span class="num">&minus;5.1%</span>, which implies revenue of <span class="num">32 to 33%</span> of GDP.</p>
+        <p class="small">World government <em>revenue</em> is also unpublished. It is displayed as an absence in the table below, not patched.</p>
+      </div>
+    </div>
+
+    <!-- rung 5: military, 2.887, orange -->
+    <div class="rung">
+      <div class="a-rail">
+        <p class="a-name">Military spending</p>
+        <p class="a-val">$2.887 tn</p>
+        <p class="a-tag"><svg class="gl" aria-hidden="true"><use href="#g-ver"/></svg> verified</p>
+        <p class="a-note">2025 &middot; 2.5% of world GDP</p>
+        <p class="a-note">SIPRI, April 2026</p>
+        <p class="a-note">sits inside the rung above</p>
+      </div>
+      <div class="d-rail">
+        <svg class="draw" viewBox="0 0 300 22" width="300">
+          <g data-pt="f3-mil" role="graphics-object" tabindex="0"
+             aria-label="Rung 5, world military expenditure, a flow drawn as solid orange cells: 2.887 trillion US dollars in 2025, 2.5 per cent of world GDP, verified from SIPRI. Two cells and 0.887 of a third. It sits inside rung 4, not beside it."
+             data-tip-title="Military spending $2.887 tn"
+             data-tip-body="2025, 2.5% of world GDP. SIPRI, April 2026: &ldquo;rose by 2.9 per cent in real terms to $2887 billion in 2025&rdquo;, an 11th consecutive year of growth and the highest level SIPRI has recorded."
+             data-tip-op="VERIFIED. Sits inside the government rung above, not beside it.">
+            <rect x="0" y="0" width="44" height="22" fill="url(#u-gov)"/>
+            <rect x="44" y="1" width="17.74" height="20" rx="2" class="c-gov"/>
+            <rect x="1" y="1" width="262" height="20" class="halo"/>
+          </g>
+        </svg>
+      </div>
+      <div class="p-rail">
+        <p><strong>Every military on earth is not quite three cells.</strong> <span class="num">$2.887 tn</span> in 2025, an eleventh consecutive annual rise and the highest level SIPRI has recorded, and still <span class="num">2.5%</span> of world output. Europe rearmed by 14% in one year while the Americas cut 6.6%.</p>
+      </div>
+    </div>
+
+    <!-- rung 6: DAC aid, 0.1743, orange -->
+    <div class="rung">
+      <div class="a-rail">
+        <p class="a-name">DAC aid, all donors</p>
+        <p class="a-val">$174.3 bn</p>
+        <p class="a-tag"><svg class="gl" aria-hidden="true"><use href="#g-ver"/></svg> verified</p>
+        <p class="a-note">2025 &middot; down 23.1% real</p>
+        <p class="a-note">0.15% of world GDP <svg class="gl" aria-hidden="true"><use href="#g-der"/></svg></p>
+        <p class="a-op">0.1743 / 118.35 = 0.15%</p>
+        <p class="a-note">&larr; 0.174 of one cell</p>
+      </div>
+      <div class="d-rail">
+        <svg class="draw" viewBox="0 0 300 22" width="300">
+          <g data-pt="f3-aid" role="graphics-object" tabindex="0"
+             aria-label="Rung 6, total DAC official development assistance, a flow drawn as a fraction of one solid orange cell: 174.3 billion US dollars in 2025, down 23.1 per cent in real terms, 0.15 per cent of world GDP, verified. Less than one fifth of a single cell. World military spending is 16.6 times this rung."
+             data-tip-title="DAC aid $174.3 bn"
+             data-tip-body="2025, all DAC donors, &ldquo;down 23.1% real&rdquo;. OECD preliminary figures. World military spending is 16.6&times; this rung; remittances to low- and middle-income countries in 2024 were 3.8&times; it."
+             data-tip-op="DERIVED share: 0.1743 / 118.35 = 0.15% of world GDP. Drawn as 0.174 of one cell.">
+            <rect x="0" y="1" width="3.486" height="20" rx="1" class="c-gov"/>
+            <rect x="1" y="1" width="262" height="20" class="halo"/>
+          </g>
+          <path class="leader" d="M6 11 H300"/>
+        </svg>
+      </div>
+      <div class="p-rail">
+        <p class="display">16.6&times;</p>
+        <p class="display-note">World military spending, over every donor government&rsquo;s aid put together. Aid is <span class="num">$174.3 bn</span>, under a fifth of one cell, and it fell <span class="num">23.1%</span> in real terms in a single year. Remittances sent home by migrants were <span class="num">3.8&times;</span> all official aid.</p>
+        <p class="small" style="margin-top:1rem">On a log axis this rung would look like a neighbour of the block at the top of the ladder. On a truncated axis it would look substantial. At one unit it is a sliver with a leader line, which is the honest picture.</p>
+      </div>
+    </div>
+  </div>
+
+  <details class="tv">
+    <summary>Table view, F3, with provenance</summary>
+    <div class="tw">
+    <table>
+      <caption>F3. Six rungs, the sub-measures they must not be confused with, and three absences. Values at the precision the report published.</caption>
+      <thead><tr><th scope="col">Rung</th><th scope="col">Quantity</th><th scope="col">Value</th><th scope="col">% of world GDP</th><th scope="col">Year</th><th scope="col">Provenance</th><th scope="col">Source and operation</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td>Total global personal wealth, 56 markets (stock, open cells)</td><td class="n">&asymp; $517.7 tn</td><td class="n">4.37&times; GDP</td><td class="n">2025</td><td><span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-der"/></svg>DERIVED</span> <span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-low"/></svg>LOW CONFIDENCE</span></td><td>UBS Global Wealth Report 2026, four pyramid bands summed. No published global total.</td></tr>
+        <tr><td class="n">2</td><td>World GDP, nominal, current US$ (flow)</td><td class="n">$118.35 tn</td><td class="n">100%</td><td class="n">2025</td><td><span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-ver"/></svg>VERIFIED</span> <span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-est"/></svg>(est.)</span></td><td>World Bank <code>NY.GDP.MKTP.CD</code>. The denominator for every share in this table.</td></tr>
+        <tr><td class="n">3</td><td>Gross capital formation, includes inventories (flow)</td><td class="n">$29.36 tn</td><td class="n">26.29%</td><td class="n">2024</td><td><span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-ver"/></svg>VERIFIED</span></td><td>World Bank <code>NE.GDI.TOTL.CD</code>. 2025 is null for the world.</td></tr>
+        <tr><td>3a</td><td><em>of which</em> gross fixed capital formation</td><td class="n">$28.61 tn</td><td class="n">25.62%</td><td class="n">2024</td><td><span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-ver"/></svg>VERIFIED</span></td><td>World Bank <code>NE.GDI.FTOT.CD</code>. Never mixed with the gross measure above.</td></tr>
+        <tr><td>3b</td><td><em>of which</em> inventories and valuables</td><td class="n">$0.75 tn</td><td class="n">0.67%</td><td class="n">2024</td><td><span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-der"/></svg>DERIVED</span></td><td>29.36 &minus; 28.61. The size of the gross-versus-fixed trap.</td></tr>
+        <tr><td class="n">4</td><td>General government expenditure, world (<em>not</em> central government)</td><td class="n">&asymp; $41 to $42 tn</td><td class="n">&asymp; 37 to 38%</td><td class="n">2024</td><td><span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-der"/></svg>DERIVED</span> <span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-low"/></svg>LOW CONFIDENCE</span></td><td>Income-group GDP weights &times; IMF expenditure ratios: 42% high income, 32% upper middle, 22% lower middle (interpolated), 18% low. No IMF World row exists. On 2025 GDP: &asymp; $43 to $45 tn.</td></tr>
+        <tr><td>4a</td><td><em>floor check</em>: general government final consumption</td><td class="n">$18.65 tn</td><td class="n">16.70%</td><td class="n">2024</td><td><span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-ver"/></svg>VERIFIED</span></td><td>World Bank <code>NE.CON.GOVT.CD</code>. Excludes transfers, interest, subsidies and public investment.</td></tr>
+        <tr><td class="n">5</td><td>World military expenditure</td><td class="n">$2.887 tn</td><td class="n">2.5%</td><td class="n">2025</td><td><span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-ver"/></svg>VERIFIED</span></td><td>SIPRI, April 2026. Sits inside rung 4; do not add the two.</td></tr>
+        <tr><td class="n">6</td><td>Total DAC official development assistance</td><td class="n">$174.3 bn</td><td class="n">0.15%</td><td class="n">2025</td><td><span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-ver"/></svg>VERIFIED</span> <span class="chip"><svg class="gl" aria-hidden="true"><use href="#g-der"/></svg>DERIVED</span> share</td><td>OECD DAC preliminary, &ldquo;down 23.1% real&rdquo;. Share derived on the 2025 nominal GDP denominator.</td></tr>
+        <tr><td>&mdash;</td><td>Global median wealth per adult</td><td class="n">not published</td><td>&mdash;</td><td>&mdash;</td><td><span class="chip">ABSENT</span></td><td>UBS publishes medians by market only. Any global figure in circulation is somebody&rsquo;s construction. Displayed as an absence, not estimated.</td></tr>
+        <tr><td>&mdash;</td><td>World government revenue</td><td class="n">not published</td><td>&mdash;</td><td>&mdash;</td><td><span class="chip">ABSENT</span></td><td>No IMF World row. An implied 32 to 33% of GDP is derivable from the published &minus;5.1% world deficit, and is deliberately not drawn.</td></tr>
+        <tr><td>&mdash;</td><td>Public versus private split of world investment</td><td class="n">does not exist in retrievable form</td><td>&mdash;</td><td>&mdash;</td><td><span class="chip">ABSENT</span></td><td>The IMF Investment and Capital Stock Dataset returned HTTP 403 on both endpoints. EU and OECD fragments only; no world split constructed.</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </details>
+
+  <figcaption>Every rung carries its own reference year, because these rungs share a unit and not a base year. Two are 2024 and four are 2025. Nothing on this ladder sums to anything: military spending sits inside general government expenditure, most official aid does too, and the stock is not built out of any of the flows.</figcaption>
+</figure>
+
+<hr class="rule">
+
+<!-- ===================== build note ===================== -->
+<section class="col" style="max-width:44rem">
+  <p class="kicker">Build note</p>
+  <h2>Second iteration: what changed, two deviations, seven objections</h2>
+
+  <p><strong>Changed on the review&rsquo;s instruction.</strong> The pitch is doubled to a 22px cell. All annotation has left the SVG for an HTML apparatus rail where one line of type is one square row, which is what makes the type reflow, respond to text-only resize, and stop colliding with the drawing. The layout is three rails and the prose tracks the drawing instead of terminating above it. F1 is pattern-filled, so the hero is now where the unit becomes visible rather than where it is asserted; the grid resolves into the flat field once, over 600ms, behind <code>prefers-reduced-motion</code>. The readout is an odometer with dollars, squares, rows and threshold anchors. The cards are gone: one continuous surface, hairline rules, figure numbers as folios. There is a display tier, spent once per figure. Stocks are open cells and flows are solid, so the distinction the piece cares about most is carried by geometry rather than by two adjacent greys. The boredom copy is one dry line.</p>
+
+  <p><strong>Two deviations from the specification.</strong></p>
+  <ol>
+    <li><strong>F1&rsquo;s title.</strong> The specification says &ldquo;four and a half times&rdquo;; the report says 4.37&times;. Shipped as &ldquo;four and a third,&rdquo; on the review&rsquo;s instruction, because shipping a title I had publicly argued was wrong costs more than deviating. The report&rsquo;s figure is stated three times around it.</li>
+    <li><strong>The unit&rsquo;s size.</strong> The specification fixes one square as one trillion dollars and never names a pixel value. The first iteration chose 10px; this one chooses 20px. Both honour the contract, and the contract is the thing that cannot move once declared.</li>
+  </ol>
+
+  <p><strong>Seven objections. Built as specified anyway, except where noted above.</strong></p>
+  <ol>
+    <li><strong>Doubling the pitch puts the hero beyond a phone.</strong> At a 22px cell the wealth square is 500px on a side. A 320px viewport cannot hold it, and the only two ways out are rescaling the unit on mobile, which the specification forbids and which would forfeit the argument on most of the traffic, or one contained horizontal pan on one figure, which the specification also warns against. I took the pan, on the hero only, and nowhere else: F2 and F3 fit a 320px viewport at the same cell. The review asked for both the doubled pitch and the pattern-filled hero without pricing this collision.</li>
+    <li><strong>F3 puts two base years on one shared unit.</strong> The rungs are 2025, 2025, 2024, 2024, 2025, 2025, and a shared unit is a shared quantitative axis on any honest reading, which the data contract forbids. Mitigated with a year on every rung, a statement that the rungs share a unit and not a base year, and a warning that nothing sums. Labelling does not dissolve it. The clean fix is two panels at the same unit, which costs the single-ladder silhouette. I would take that trade and have not taken it unilaterally.</li>
+    <li><strong>The specification&rsquo;s greyscale claim contradicts its own lightness gate.</strong> Section 8 says the palette varies in lightness so every figure survives greyscale; section 5 requires all three categorical colours inside L 0.43 to 0.77, which by construction makes them nearly identical in grey. Converted: orange lands at grey 144 and aqua at 154, ten steps out of 255, in both modes. Blue is the only one that separates. Nothing in this stage depends on it, and the open-versus-solid cell geometry now carries the stock-flow distinction without hue, but from F4 the Marimekko will carry three categorical colours in one stack and the greyscale claim will be false there. Direct labels and the table view are the relief, not the palette.</li>
+    <li><strong>The specification ships a token that cannot legally carry text under its own gate.</strong> <code>--text-muted</code> is documented as &ldquo;axis and tick labels&rdquo; and measures 3.50:1 against the light surface. Axis and tick labels are text, and the accessibility gate requires 4.5:1 for every character of text. The token is unusable for its stated purpose. It appears nowhere in this build.</li>
+    <li><strong>The 2.09 side ratio is not in the report.</strong> It is &radic;4.37, a property of the drawing. The specification requires it in type; the data contract forbids numbers absent from the report. Resolved by labelling it ARTIFACT GEOMETRY in the table with the operation exposed, and by a general rule in the legend separating drawing arithmetic from data.</li>
+    <li><strong>Retention lever 4 is not built, and this is the honest note the last iteration owed.</strong> The design document ranks &ldquo;one data-connected pictograph, used as the mark&rdquo; fourth by evidence strength: recall quality 2.01 against 1.50, p &lt; 0.001. Every mark in this stage is an abstract cell, because a pictographic unit cannot also be a countable one, and the countable unit is the piece&rsquo;s central promise. Human-shaped icons arrive as the vocabulary at F9, where the form is an icon array and the evidence applies directly. Lever 6, a familiar-context anchor for every huge number, <em>is</em> now built: the odometer names what the reader has just passed in the dataset&rsquo;s own terms, at nine thresholds.</li>
+    <li><strong>The odometer&rsquo;s running total is geometry presented as a quantity.</strong> &ldquo;$193.3 tn passed&rdquo; is a scroll position multiplied by the unit, not a published figure about the world. It is the one place in the piece where a number on screen is not in the report, and the legend&rsquo;s geometry rule covers it. A reader who reads it as a data claim has been misled by a device I chose, so it is flagged here rather than defended.</li>
+  </ol>
+
+  <p><strong>Still to come.</strong> F4 to F6, the Marimekko with its required companion dot plot and the statistical-discrepancy column. F7 to F12, the prediction gate, the skyscraper, the icon array, the forest plot with its deliberately suppressed diamond, the ratchet with its boundary encoded three times, and the nominal-versus-PPP small multiples. F13, the searchable provenance table with CSV export, which becomes the index to this apparatus rather than a bolt-on tool.</p>
+</section>
+
+</div><!-- /wrap -->
+
+<!-- ============================================================
+     SCRIPTS. End of <body>. No charting library, no Canvas, and no
+     browser storage of any kind: state lives in one plain object,
+     and nothing here so much as feature-detects a storage
+     interface, because merely touching one throws in this context.
+     ============================================================ -->
+<script>
+(function(){
+"use strict";
+
+/* ---------------------------------------------------------------
+   ONE STATE OBJECT.
+   --------------------------------------------------------------- */
+var VIZ = {
+  theme:  "auto",
+  motion: true,
+  pinned: null,
+  unit:   { cell:20, gap:2, pitch:22, cols:12, dollars:1e12 },
+  f3:     { rows:44, units:517.7 },
+  /* Lever 6: a familiar-context anchor for every huge number, named in the
+     dataset's own terms. Every value is in the source report and the year
+     is stated with it, because these come from four different vintages.
+
+     The first four thresholds all fall inside the first four rows: all the
+     aid, every military, a year of capital formation and every government
+     on earth are behind the reader in 88 pixels of this stock. Rather than
+     flash four anchors in 88px, or lag behind the scroll on a timer and
+     misreport where the reader is, they are one composite line that fires
+     at 41. After that the spacing is 10 to 20 rows and needs no help. */
+  marks: [
+    { at:41, html:"Four rows in, you have passed <b>all the official development assistance on earth</b> ($174.3 bn, 2025), <b>every military</b> ($2.887 tn, 2025), <b>a year of world capital formation</b> ($29.36 tn, 2024) and <b>every government</b> (&asymp;$41 to $42 tn, 2024).", say:"every government on earth" },
+    { at:118.35, what:"a year of world output",                        val:"$118.35 tn",     yr:"2025" },
+    { at:151.94, what:"all listed equity on earth",                    val:"$151.94 tn",     yr:"end-2025" },
+    { at:185.04, what:"all the personal wealth in the United States",  val:"$185.04 tn",     yr:"2025" },
+    { at:250.59, what:"the wealth of the 58 million adults worth over $1 m", val:"$250.59 tn", yr:"2025" },
+    { at:353,    what:"all the debt in the world, every sector",       val:"&asymp;$353 tn", yr:"Q1 2026" },
+    { at:517.6,  what:"the whole stock, which no institution publishes a total for", val:"&asymp;$517.7 tn", yr:"2025" }
+  ]
+};
+
+/* ---------------------------------------------------------------
+   SCALE, TICK AND FORMAT HELPERS. Hand-written; the whole piece
+   needs about eighty lines of this and no library. Signatures are
+   unchanged from the first iteration and fixed for every later
+   stage.
+   --------------------------------------------------------------- */
+function linear(d0, d1, r0, r1){
+  var span = (d1 - d0) || 1, m = (r1 - r0) / span;
+  function s(x){ return r0 + (x - d0) * m; }
+  s.invert = function(y){ return d0 + (y - r0) / m; };
+  s.domain = [d0, d1]; s.range = [r0, r1];
+  return s;
+}
+function band(n, r0, r1, padInner){
+  var pad = padInner == null ? 0.1 : padInner;
+  var step = (r1 - r0) / Math.max(1, n);
+  function s(i){ return r0 + i * step; }
+  s.width = step * (1 - pad); s.step = step;
+  return s;
+}
+function niceStep(raw){
+  var a = Math.abs(raw) || 1;
+  var e = Math.pow(10, Math.floor(Math.log(a) / Math.LN10));
+  var f = a / e;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * e;
+}
+function ticks(d0, d1, count){
+  var step = niceStep((d1 - d0) / Math.max(1, count || 5));
+  var out = [], v = Math.ceil(d0 / step) * step;
+  for (; v <= d1 + step * 1e-9; v += step) out.push(Math.round(v / step) * step);
+  return out;
+}
+function fmtTn(v, dp){ return "$" + v.toFixed(dp == null ? 2 : dp) + " tn"; }
+function fmtBn(v, dp){ return "$" + v.toFixed(dp == null ? 1 : dp) + " bn"; }
+function fmtPct(v, dp){ return v.toFixed(dp == null ? 2 : dp) + "%"; }
+function fmtMult(v, dp){ return v.toFixed(dp == null ? 2 : dp) + "×"; }
+function fmtCount(v){ return String(Math.round(v)); }
+/* how a magnitude lands on the fixed unit grid */
+function unitRows(n, cols){
+  var c = cols || VIZ.unit.cols;
+  var full = Math.floor(n / c);
+  var rest = n - full * c;
+  var whole = Math.floor(rest + 1e-9);
+  return { rows: full + (rest > 1e-9 ? 1 : 0), full: full, whole: whole, frac: rest - whole };
+}
+/* the three rects that draw any magnitude at the fixed unit: full block,
+   part row, part cell. O(1) elements at any count, which is why 517.7
+   cells cost three nodes rather than 518. */
+function unitRects(n, x, y, cols){
+  var u = VIZ.unit, c = cols || u.cols, r = unitRows(n, c), out = [];
+  if (r.full)  out.push({ kind:"block", x:x, y:y, w:c * u.pitch, h:r.full * u.pitch });
+  if (r.whole) out.push({ kind:"row",   x:x, y:y + r.full * u.pitch, w:r.whole * u.pitch, h:u.pitch });
+  if (r.frac > 1e-9) out.push({ kind:"frac", x:x + r.whole * u.pitch, y:y + r.full * u.pitch, w:+(u.cell * r.frac).toFixed(3), h:u.cell });
+  return out;
+}
+function svgNode(name, attrs){
+  var n = document.createElementNS("http://www.w3.org/2000/svg", name);
+  for (var k in attrs) if (Object.prototype.hasOwnProperty.call(attrs, k)) n.setAttribute(k, attrs[k]);
+  return n;
+}
+function motionAllowed(){
+  return !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+/* Intersection Observer, written directly. No library. */
+function onView(nodes, cb, opts){
+  if (!("IntersectionObserver" in window)) { for (var i = 0; i < nodes.length; i++) cb(nodes[i]); return null; }
+  var io = new IntersectionObserver(function(entries){
+    for (var j = 0; j < entries.length; j++) {
+      if (entries[j].isIntersecting) { cb(entries[j].target); if (!opts || !opts.keep) io.unobserve(entries[j].target); }
+    }
+  }, opts || { rootMargin:"0px 0px -12% 0px", threshold:0.08 });
+  for (var k = 0; k < nodes.length; k++) io.observe(nodes[k]);
+  return io;
+}
+
+/* --------------------------------------------------------------- */
+document.documentElement.classList.add("js");
+VIZ.motion = motionAllowed();
+
+/* reveal on view; under reduced motion the pre-state is never applied,
+   so marks sit at their end state rather than animating faster */
+var risers = [].slice.call(document.querySelectorAll(".rise"));
+if (!VIZ.motion) {
+  risers.forEach(function(n){ n.classList.add("in"); n.style.opacity = "1"; n.style.transform = "none"; });
+} else {
+  onView(risers, function(n){ n.classList.add("in"); });
+}
+
+/* the hero's grid resolves into the flat field once, on first view. The
+   default DOM state is the resolved grid, so this is additive and the
+   figure is correct with no script and under reduced motion. */
+var stage = document.getElementById("hero-stage");
+if (stage && VIZ.motion) {
+  stage.classList.add("pre");
+  onView([stage], function(){
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ stage.classList.remove("pre"); }); });
+  }, { threshold:0.15 });
+}
+
+/* ---------------------------- tooltips ----------------------------
+   Hover is an enhancement gated in CSS behind (hover:hover). Tap and
+   keyboard focus do the same job, and the same content sits in each
+   group's aria-label, in the apparatus rail and in the table view. */
+function tipFor(group){
+  var fig = group.closest("figure.fig");
+  if (!fig) return null;
+  var t = fig.querySelector(".tip");
+  if (!t) {
+    t = document.createElement("div");
+    t.className = "tip";
+    t.setAttribute("aria-hidden", "true");
+    fig.style.position = "relative";
+    fig.appendChild(t);
+  }
+  return t;
+}
+function showTip(group, persist){
+  var tip = tipFor(group); if (!tip) return;
+  var t = group.getAttribute("data-tip-title") || "";
+  var b = group.getAttribute("data-tip-body") || "";
+  var o = group.getAttribute("data-tip-op") || "";
+  tip.innerHTML = "<b>" + t + "</b>" + b + (o ? '<div class="op">' + o + "</div>" : "");
+  /* prefer the space to the right of the drawing and apparatus rails, so
+     a tooltip never covers the marks it describes or their labels */
+  var host = tip.offsetParent || tip.parentNode;
+  var hb = host.getBoundingClientRect();
+  var r = group.getBoundingClientRect();
+  var w = tip.offsetWidth || 304;
+  var pref = 348, left, top = r.top - hb.top;
+  if (hb.width - pref >= w + 4) { left = pref; }
+  else { left = 4; top = r.bottom - hb.top + 10; }
+  tip.style.left = Math.max(4, Math.min(left, Math.max(4, hb.width - w - 4))) + "px";
+  tip.style.top = Math.max(4, top) + "px";
+  tip.classList.add("on");
+  if (persist) { VIZ.pinned = group; group.classList.add("pinned"); }
+}
+function hideTip(group){
+  var tip = tipFor(group); if (!tip) return;
+  if (VIZ.pinned && VIZ.pinned !== group) return;
+  tip.classList.remove("on");
+  if (VIZ.pinned) { VIZ.pinned.classList.remove("pinned"); VIZ.pinned = null; }
+}
+[].slice.call(document.querySelectorAll("[data-pt]")).forEach(function(g){
+  g.addEventListener("mouseenter", function(){ if (!VIZ.pinned) showTip(g, false); });
+  g.addEventListener("mouseleave", function(){ if (!VIZ.pinned) hideTip(g); });
+  g.addEventListener("focus", function(){ showTip(g, false); });
+  g.addEventListener("blur", function(){ hideTip(g); });
+  g.addEventListener("click", function(e){
+    e.stopPropagation();
+    if (VIZ.pinned === g) { hideTip(g); } else { VIZ.pinned = null; showTip(g, true); }
+  });
+  /* keyboard traversal across every data point in the figure, which now
+     spans several sibling SVGs rather than one */
+  g.addEventListener("keydown", function(e){
+    var fig = g.closest("figure.fig");
+    var sibs = [].slice.call(fig.querySelectorAll("[data-pt]"));
+    var i = sibs.indexOf(g), to = -1;
+    if (e.key === "ArrowDown" || e.key === "ArrowRight") to = Math.min(sibs.length - 1, i + 1);
+    else if (e.key === "ArrowUp" || e.key === "ArrowLeft") to = Math.max(0, i - 1);
+    else if (e.key === "Home") to = 0;
+    else if (e.key === "End") to = sibs.length - 1;
+    else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (VIZ.pinned === g) hideTip(g); else { VIZ.pinned = null; showTip(g, true); }
+      return;
+    } else if (e.key === "Escape") { hideTip(g); return; }
+    if (to > -1) { e.preventDefault(); sibs[to].focus(); }
+  });
+});
+document.addEventListener("click", function(){ if (VIZ.pinned) hideTip(VIZ.pinned); });
+
+/* ------------------------- theme control -------------------------
+   The dark values are declared under the media query and under a
+   [data-theme] scope, so this wins in either direction. Nothing is
+   persisted: there is no storage in this piece. */
+var btn = document.getElementById("themebtn");
+function darkNow(){
+  var t = document.documentElement.getAttribute("data-theme");
+  if (t) return t === "dark";
+  return !!(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
+}
+function paintBtn(){
+  var d = darkNow();
+  btn.textContent = d ? "Light mode" : "Dark mode";
+  btn.setAttribute("aria-pressed", d ? "true" : "false");
+}
+btn.addEventListener("click", function(){
+  document.documentElement.setAttribute("data-theme", darkNow() ? "light" : "dark");
+  VIZ.theme = document.documentElement.getAttribute("data-theme");
+  paintBtn();
+});
+paintBtn();
+if (window.matchMedia) {
+  var mq = matchMedia("(prefers-color-scheme: dark)");
+  if (mq.addEventListener) mq.addEventListener("change", paintBtn);
+}
+
+/* --------------------------- the odometer ---------------------------
+   The moving reference marker the specification asked for: in a long
+   empty stretch, make the length measurable rather than merely long.
+   Counts squares and dollars, names what the reader has just passed,
+   and announces at every fifth row for screen readers rather than on
+   every frame. Static text is already in the DOM for the no-script
+   and reduced-motion cases; this only rewrites it. */
+var wealthSvg = document.getElementById("f3-wealth-svg");
+var elD = document.getElementById("odo-dollars");
+var elS = document.getElementById("odo-squares");
+var elR = document.getElementById("odo-row");
+var elA = document.getElementById("odo-anchor");
+var elL = document.getElementById("odo-live");
+if (wealthSvg && elD && VIZ.motion) {
+  var block = wealthSvg.querySelector('[data-pt="f3-wealth"] rect');
+  var live = false, queued = false, lastSaid = -1, shown = -1;
+  var paint = function(){
+    queued = false;
+    if (!live) return;
+    var r = block.getBoundingClientRect();
+    var f = (window.innerHeight * 0.5 - r.top) / (r.height || 1);
+    f = f < 0 ? 0 : f > 1 ? 1 : f;
+    var passed = f * VIZ.f3.units;
+    var row = Math.min(VIZ.f3.rows, Math.floor(f * VIZ.f3.rows) + (f > 0 ? 1 : 0));
+    elD.textContent = "$" + passed.toFixed(1) + " tn";
+    elS.textContent = passed.toFixed(1);
+    elR.textContent = "row " + fmtCount(Math.max(1, row));
+    /* the highest threshold the reader has crossed. Position-truthful:
+       the line always describes where the reader actually is. */
+    var idx = -1;
+    for (var i = 0; i < VIZ.marks.length; i++) if (passed >= VIZ.marks[i].at) idx = i;
+    if (idx !== shown) {
+      shown = idx;
+      var m = VIZ.marks[idx];
+      elA.innerHTML = idx < 0
+        ? "Each cell below is one trillion dollars of personal wealth, 2025. Watch this line as you pass things."
+        : (m.html ? m.html
+                  : "You have just passed <b>" + m.what + "</b>, " + m.val + " (" + m.yr + ").");
+    }
+    var band = Math.floor(row / 5);
+    if (band !== lastSaid) {
+      lastSaid = band;
+      var said = shown < 0 ? "" : " Last threshold: " + (VIZ.marks[shown].say || VIZ.marks[shown].what) + ".";
+      elL.textContent = "Row " + Math.max(1, row) + " of 44. " + passed.toFixed(1) +
+        " of 517.7 trillion dollars passed." + said;
+    }
+  };
+  onView([document.getElementById("f3-rungs")], function(){ live = true; paint(); }, { threshold:0, keep:true });
+  var queue = function(){ if (!queued) { queued = true; requestAnimationFrame(paint); } };
+  addEventListener("scroll", queue, { passive:true });
+  addEventListener("resize", queue, { passive:true });
+}
+
+/* --------------------------- print path ---------------------------
+   A scroller prints catastrophically by default. The stylesheet
+   releases every sticky element and forces the steps visible; this
+   opens the table views so the provenance column prints, then
+   restores them. */
+var opened = [];
+addEventListener("beforeprint", function(){
+  opened = [];
+  [].slice.call(document.querySelectorAll("details.tv")).forEach(function(d){
+    if (!d.open) { d.open = true; opened.push(d); }
+  });
+});
+addEventListener("afterprint", function(){
+  opened.forEach(function(d){ d.open = false; });
+  opened = [];
+});
+
+/* expose the helper layer for later stages and for auditing */
+window.VIZ = VIZ;
+VIZ.helpers = {
+  linear:linear, band:band, niceStep:niceStep, ticks:ticks,
+  fmtTn:fmtTn, fmtBn:fmtBn, fmtPct:fmtPct, fmtMult:fmtMult, fmtCount:fmtCount,
+  unitRows:unitRows, unitRects:unitRects, svgNode:svgNode, onView:onView,
+  motionAllowed:motionAllowed
+};
+})();
+</script>
+
+<!-- injected by the site build: a way back to the library -->
+<style>
+#__site_back{position:fixed;left:14px;bottom:14px;z-index:2147483000;
+  font:500 13px/1 "InterVar",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  display:inline-flex;align-items:center;gap:6px;padding:9px 13px;border-radius:99px;
+  background:rgba(20,20,20,.82);color:#fff;text-decoration:none;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.14);box-shadow:0 4px 16px rgba(0,0,0,.22);
+  opacity:.55;transition:opacity .18s ease,transform .18s ease}
+#__site_back:hover,#__site_back:focus{opacity:1;transform:translateY(-1px);color:#fff}
+@media print{#__site_back{display:none}}
+</style>
+<a id="__site_back" href="library.html">&#8592; Library</a>
+</body>
+</html>

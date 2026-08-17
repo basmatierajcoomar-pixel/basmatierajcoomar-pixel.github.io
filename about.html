@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About — Alex Rajcoomar</title>
+<meta name="description" content="Alex Rajcoomar, AFM Analytics student at the University of Waterloo.">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="About — Alex Rajcoomar">
+<meta property="og:description" content="Alex Rajcoomar, AFM Analytics student at the University of Waterloo.">
+<meta property="og:type" content="website">
+<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/inter-ui/4.1.1/variable/InterVariable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="site.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232a78d6'/><text x='50' y='70' font-size='58' font-family='Helvetica,Arial' font-weight='bold' fill='white' text-anchor='middle'>A</text></svg>">
+<script>
+/* Set the theme before first paint so there is no flash. */
+(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
+</head>
+<body>
+<header class="top">
+  <div class="bar">
+    <a class="brand" href="index.html">Alex Rajcoomar <span>· portfolio</span></a>
+    <nav class="main">
+      <a href="index.html">Home</a>
+      <a href="library.html">Library</a>
+      <a href="about.html" aria-current="page">About</a>
+      <button class="themetoggle" type="button" id="themebtn" aria-label="Switch between light and dark">◐</button>
+    </nav>
+  </div>
+</header>
+<main>
+<div class="hero shell" style="padding-block:3.5rem 2.25rem">
+  <p class="eyebrow">About</p>
+  <h1 class="display" style="font-size:clamp(2rem,4.5vw,3rem)">Leesharam Alexander Rajcoomar</h1>
+</div>
+<section class="shell" style="padding-block:2.5rem 4rem">
+  <div class="prose">
+    <p>I am a 2B student in Accounting and Financial Management, Analytics stream, University of Waterloo. My prior co-op work was preparing Canadian
+    corporate and personal tax returns, which is where I learned that the difference between
+    knowing a rule and being able to apply it under time pressure is most of the job.</p>
+
+    <h2>Why this site exists</h2>
+    <p>Most of what I build starts as a problem I have: a course that will not stay in my head, a
+    claim I do not believe, a process I keep repeating by hand. The output is usually an
+    interactive document, because a diagram you can interrogate beats a paragraph you can skim.
+    Rather than let those sit in a downloads folder, they live here, running, where anyone can use
+    them.</p>
+
+    <h2>How the work is organised</h2>
+    <ul>
+      <li><strong>Apps</strong> are interactive: drills, trainers and daily instruments. Several
+      install to a phone home screen and run offline.</li>
+      <li><strong>Essays</strong> are data pieces where the argument is carried by the figures, and
+      every figure carries the source it was published under.</li>
+      <li><strong>References</strong> are built for retrieval under pressure rather than for
+      reading front to back.</li>
+    </ul>
+
+    <h2>Interests</h2>
+    <p>Financial reporting under IFRS and ASPE, Canadian tax, and the analytics side of accounting.
+    Outside coursework I follow AI in medicine and commercial spaceflight, and I run a standing
+    personal research program on the science of learning, judgment under uncertainty, and
+    capital cycles.</p>
+
+    <h2>Contact</h2>
+    <p>Reach me at <a href="mailto:basmatierajcoomar@gmail.com">basmatierajcoomar@gmail.com</a>.</p>
+
+    <h2>A note on the material</h2>
+    <p>These are my own study artefacts, written by me for my own use. They are not course
+    materials, not official solutions, and not a substitute for the standards themselves. Where a
+    figure or a rule matters, check the primary source: the CPA Canada Handbook, the Income Tax
+    Act, or the CRA.</p>
+  </div>
+</section>
+</main>
+<footer class="site">
+  <div class="shell bar">
+    <span>© 2026 Leesharam Alexander Rajcoomar</span>
+    <span class="right"><a href="library.html">Library</a> · <a href="about.html">About</a></span>
+  </div>
+</footer>
+<script>
+document.getElementById('themebtn').addEventListener('click',function(){
+  var el=document.documentElement, cur=el.getAttribute('data-theme');
+  if(!cur){
+    cur=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
+  }
+  var next=(cur==='dark')?'light':'dark';
+  el.setAttribute('data-theme',next);
+  try{localStorage.setItem('theme',next);}catch(e){}
+});
+</script>
+</body>
+</html>
