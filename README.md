@@ -3,7 +3,7 @@
 This folder **is** the website. Every file in it gets published exactly as it is.
 There is nothing to install, nothing to compile, and no command to run.
 
-Live at: `https://YOUR-USERNAME.github.io`
+Live at: `https://basmatierajcoomar-pixel.github.io`
 
 ---
 
@@ -18,7 +18,7 @@ Live at: `https://YOUR-USERNAME.github.io`
 
 Everything else is a project. Each project is one self-contained `.html` file
 named after its web address: `skill-forge.html` is live at
-`https://YOUR-USERNAME.github.io/skill-forge.html`.
+`https://basmatierajcoomar-pixel.github.io/skill-forge.html`.
 
 ---
 
@@ -33,7 +33,7 @@ so keep it short.
 **Commit changes**.
 
 **Step 3.** Wait about a minute, then open
-`https://YOUR-USERNAME.github.io/my-new-thing.html`. It is live.
+`https://basmatierajcoomar-pixel.github.io/my-new-thing.html`. It is live.
 
 At this point the project works but is not *listed* anywhere. To get it onto the
 home page and the library, ask Claude: *"add my-new-thing.html to my site's
