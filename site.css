@@ -613,7 +613,7 @@ footer.site .fine b{font-weight:600;color:var(--ink-2)}
 /* --------------------------------------------------- specimens ---
    Real figures, lifted unchanged out of the pieces they belong to.
    Each one is shown with the single rule that governs its marks. */
-.specs{display:grid;gap:calc(var(--gap) * 1.6)}
+.specs{display:grid;grid-template-columns:minmax(0,1fr);gap:calc(var(--gap) * 1.6)}
 .spec{display:block;min-width:0}
 .spec + .spec{border-top:1px solid var(--rule);padding-top:calc(var(--gap) * 1.6)}
 .spec figcaption{display:grid;gap:.4rem var(--gap);padding-top:.9rem}
@@ -651,7 +651,9 @@ footer.site .fine b{font-weight:600;color:var(--ink-2)}
 
 /* ------------------------------------------------ lead feature ---
    One piece at the top of Research, at the size it earns. */
-.lead{display:grid;gap:var(--gap);align-items:start;padding-bottom:var(--gap)}
+.lead{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--gap);
+  align-items:start;padding-bottom:var(--gap)}
+.lead > *{min-width:0}
 @media (min-width:62rem){.lead{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}}
 .lead .lt h3{margin:.35rem 0 .5rem;font-size:clamp(1.5rem,3.2vw,2.125rem);letter-spacing:-.026em;line-height:1.1}
 .lead .lt h3 a{color:inherit;text-decoration:none}
@@ -695,4 +697,219 @@ details.tv[open]{padding-bottom:1rem}
 @media print{
   .corpus{grid-template-columns:1fr}
   .spec,.lead,.corpusfig{break-inside:avoid}
+}
+
+
+/* ==================================================================
+   STUDY DOCUMENTS
+   Long converted notes: a sticky contents rail, a reading-progress
+   bar, callouts, and checkpoint questions that stay closed until the
+   reader commits to an answer. Table-forward rather than figure-
+   forward, because that is what this material is.
+   ================================================================== */
+
+.docbar{
+  /* Sits below the site header rather than on top of it: both are sticky,
+     and at top:0 they stack in the same 60px. */
+  position:sticky;top:var(--stick);z-index:40;
+  background:color-mix(in srgb,var(--paper) 92%,transparent);
+  backdrop-filter:saturate(1.3) blur(10px);
+  -webkit-backdrop-filter:saturate(1.3) blur(10px);
+  border-bottom:1px solid var(--rule);
+}
+.docbar .inner{
+  max-width:var(--shell);margin:0 auto;padding:.5rem 1.5rem;
+  display:flex;align-items:center;gap:.85rem;font-size:.8125rem;color:var(--ink-3);
+}
+.docbar .where{
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;
+}
+.docbar .where b{color:var(--ink-2);font-weight:560}
+.docbar .up{margin-left:auto;color:var(--accent);text-decoration:none;white-space:nowrap;font-weight:560}
+.docbar .up:hover{text-decoration:underline}
+.tocbtn{
+  appearance:none;border:1px solid var(--edge);background:var(--panel);color:var(--ink-2);
+  font:inherit;font-size:.75rem;font-weight:600;padding:.25rem .6rem;cursor:pointer;
+}
+@media (min-width:68rem){ .tocbtn{display:none} }
+#progress{position:absolute;left:0;bottom:-1px;height:2px;background:var(--accent);width:0}
+
+.doc{max-width:var(--shell);margin:0 auto;padding:0 1.5rem 5rem}
+.doc-grid{display:block}
+@media (min-width:68rem){
+  .doc-grid{display:grid;grid-template-columns:15.5rem minmax(0,1fr);gap:3rem;align-items:start}
+}
+
+/* ------------------------------------------------------- contents rail -- */
+.toc{
+  font-size:.8125rem;
+}
+@media (min-width:68rem){
+  .toc{position:sticky;top:7.25rem;max-height:calc(100vh - 9rem);overflow-y:auto;
+       padding:2.5rem 0 2rem;border-right:1px solid var(--rule)}
+}
+@media (max-width:67.999rem){
+  .toc{
+    position:fixed;inset:0 auto 0 0;width:min(20rem,86vw);z-index:60;
+    background:var(--paper);border-right:1px solid var(--rule);
+    padding:1.25rem 1.25rem 3rem;overflow-y:auto;
+    transform:translateX(-102%);transition:transform .22s ease;
+  }
+  .toc.open{transform:none;box-shadow:0 0 40px rgba(0,0,0,.25)}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:55;opacity:0;pointer-events:none;transition:opacity .2s}
+  .scrim.on{opacity:1;pointer-events:auto}
+}
+@media (prefers-reduced-motion:reduce){ .toc{transition:none} }
+.toc h2{
+  font-size:.6875rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);
+  margin:0 0 .75rem;font-weight:670;
+}
+.toc ol{list-style:none;margin:0;padding:0}
+.toc li{margin:0}
+.toc a{
+  display:block;padding:.28rem .5rem .28rem .6rem;color:var(--ink-2);text-decoration:none;
+  border-left:2px solid transparent;line-height:1.35;
+}
+.toc a:hover{color:var(--ink);background:var(--panel)}
+.toc a.on{color:var(--ink);border-left-color:var(--accent);font-weight:560;background:var(--panel)}
+.toc .l3 a{padding-left:1.35rem;font-size:.78125rem;color:var(--ink-3)}
+.toc .close{display:none}
+@media (max-width:67.999rem){
+  .toc .close{display:inline-block;margin-bottom:.75rem;border:1px solid var(--edge);
+    background:none;color:var(--ink-2);font:inherit;font-size:.75rem;padding:.25rem .6rem;cursor:pointer}
+}
+
+/* ------------------------------------------------------------- masthead -- */
+.docmast{padding:3rem 0 1.5rem;border-bottom:2px solid var(--ink);margin-bottom:2rem}
+.docmast .kick{
+  font-size:.75rem;letter-spacing:.11em;text-transform:uppercase;color:var(--accent);
+  font-weight:660;margin:0 0 .9rem;
+}
+.docmast h1{
+  margin:0 0 .6rem;font-size:clamp(1.85rem,4.2vw,2.75rem);line-height:1.08;
+  letter-spacing:-.028em;font-weight:660;max-width:24ch;
+}
+.docmast .dek{margin:0 0 1.25rem;color:var(--ink-2);font-size:1.0625rem;max-width:44rem}
+.docmeta{display:flex;flex-wrap:wrap;gap:.4rem .5rem;align-items:center}
+.docmeta .mchip{
+  font-size:.6875rem;letter-spacing:.05em;text-transform:uppercase;font-weight:620;
+  border:1px solid var(--rule-strong);color:var(--ink-3);padding:.12rem .45rem;white-space:nowrap;
+}
+.docmeta .mchip b{color:var(--ink-2);font-weight:620}
+
+/* ------------------------------------------------------------ doc body --- */
+.docbody{
+  max-width:44rem;font-size:1rem;line-height:1.68;
+  /* Long unbreakable tokens (standard references, account strings) otherwise
+     spill past the column on a phone and widen the whole document. */
+  overflow-wrap:break-word;
+}
+.docbody > h1{display:none}          /* the masthead already carries it */
+.docbody h2{
+  margin:2.75rem 0 .85rem;font-size:1.375rem;letter-spacing:-.02em;font-weight:640;
+  padding-top:.85rem;border-top:1px solid var(--rule);scroll-margin-top:7.25rem;
+}
+.docbody h3{margin:2rem 0 .6rem;font-size:1.0625rem;font-weight:640;letter-spacing:-.012em;scroll-margin-top:7.25rem}
+.docbody h4{margin:1.5rem 0 .5rem;font-size:.9375rem;font-weight:640;color:var(--ink-2);scroll-margin-top:7.25rem}
+.docbody p{margin:0 0 1rem;color:var(--ink-2)}
+.docbody strong{color:var(--ink);font-weight:620}
+.docbody a{color:var(--accent);text-underline-offset:2px}
+.docbody ul,.docbody ol{margin:0 0 1rem;padding-left:1.3rem;color:var(--ink-2)}
+.docbody li{margin-bottom:.4rem}
+.docbody li > ul,.docbody li > ol{margin-top:.4rem}
+.docbody hr{border:0;border-top:1px solid var(--rule);margin:2.25rem 0}
+.docbody blockquote{
+  margin:0 0 1rem;padding:.1rem 0 .1rem 1rem;border-left:2px solid var(--rule-strong);
+  color:var(--ink-2);
+}
+.docbody code{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.86em;
+  background:var(--panel);padding:.06rem .3rem;color:var(--ink);
+}
+.docbody pre{
+  background:var(--panel);border:1px solid var(--rule);padding:.9rem 1rem;overflow-x:auto;
+  font-size:.8125rem;line-height:1.5;margin:0 0 1.25rem;
+}
+.docbody pre code{background:none;padding:0;font-size:inherit}
+.docbody table{width:100%;border-collapse:collapse;font-size:.875rem;margin:0 0 .35rem}
+.docbody th,.docbody td{
+  text-align:left;padding:.45rem .6rem;border-bottom:1px solid var(--rule);vertical-align:top;
+}
+.docbody thead th{
+  font-size:.6875rem;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);
+  border-bottom:1px solid var(--rule-strong);font-weight:670;
+}
+.docbody tbody tr:hover{background:var(--panel)}
+.docbody .tw{overflow-x:auto;margin:0 0 1.25rem;-webkit-overflow-scrolling:touch}
+.docbody .tw table{min-width:34rem}
+.docbody img{max-width:100%;height:auto}
+
+/* -------------------------------------------------------------- callouts - */
+.cal{
+  margin:0 0 1.25rem;padding:.85rem 1rem;background:var(--panel);
+  border-left:3px solid var(--rule-strong);
+}
+.cal .ch{margin:0 0 .4rem;display:flex;flex-wrap:wrap;gap:.5rem;align-items:baseline}
+.cal .cw{
+  font-size:.6875rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;
+  color:var(--ink-3);
+}
+.cal .ct{font-weight:620;color:var(--ink);font-size:.9375rem}
+.cal .cb > *:last-child{margin-bottom:0}
+.cal .cb p{font-size:.9375rem}
+.cal-imp,.cal-warn{border-left-color:var(--ref)} .cal-imp .cw,.cal-warn .cw{color:var(--ref)}
+.cal-danger,.cal-bug{border-left-color:#c0392b} .cal-danger .cw,.cal-bug .cw{color:#c0392b}
+.cal-check,.cal-tip{border-left-color:var(--tool)} .cal-check .cw,.cal-tip .cw{color:var(--tool)}
+.cal-abstract,.cal-info,.cal-note,.cal-eg{border-left-color:var(--accent)}
+.cal-abstract .cw,.cal-info .cw,.cal-note .cw,.cal-eg .cw{color:var(--accent)}
+@media (prefers-color-scheme:dark){
+  :root:where(:not([data-theme="light"])) .cal-danger,
+  :root:where(:not([data-theme="light"])) .cal-bug{border-left-color:#e66767}
+  :root:where(:not([data-theme="light"])) .cal-danger .cw,
+  :root:where(:not([data-theme="light"])) .cal-bug .cw{color:#e66767}
+}
+:root[data-theme="dark"] .cal-danger,:root[data-theme="dark"] .cal-bug{border-left-color:#e66767}
+:root[data-theme="dark"] .cal-danger .cw,:root[data-theme="dark"] .cal-bug .cw{color:#e66767}
+
+/* checkpoint questions: closed until the reader commits to an answer */
+details.cal-q{
+  padding:0;border-left-width:3px;border-left-color:var(--tool);background:var(--panel);
+}
+details.cal-q > summary{
+  cursor:pointer;list-style:none;padding:.7rem 1rem;display:flex;gap:.6rem;
+  align-items:baseline;flex-wrap:wrap;
+}
+details.cal-q > summary::-webkit-details-marker{display:none}
+details.cal-q > summary::after{
+  content:"Show answer";margin-left:auto;font-size:.6875rem;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--accent);font-weight:660;white-space:nowrap;
+}
+details.cal-q[open] > summary::after{content:"Hide"}
+details.cal-q > summary:hover .ct{color:var(--accent)}
+details.cal-q .cw{color:var(--tool)}
+details.cal-q .cb{padding:0 1rem .8rem;border-top:1px solid var(--rule)}
+details.cal-q .cb > *:first-child{margin-top:.8rem}
+
+/* -------------------------------------------------------- provenance ----- */
+.pv{
+  display:inline-block;font-size:.6875rem;letter-spacing:.05em;text-transform:uppercase;
+  font-weight:680;padding:.02rem .35rem;border:1px solid currentColor;vertical-align:.06em;
+}
+.pv-v{color:var(--tool)} .pv-i{color:var(--ref)} .pv-m{color:var(--ink-3)} .pv-u{color:#c0392b}
+
+/* ------------------------------------------------------------- endnote --- */
+.docend{
+  margin-top:3rem;padding-top:1.25rem;border-top:2px solid var(--ink);
+  font-size:.8125rem;color:var(--ink-3);max-width:44rem;
+}
+.docend a{color:var(--accent)}
+
+@media print{
+  .docbar,.toc,.top,.tocbtn{display:none !important}
+  .doc-grid{display:block}
+  details.cal-q{border:1px solid #999}
+  details.cal-q > summary::after{content:""}
+  details.cal-q .cb{display:block !important}
+  .cal,.docbody table,.docbody pre{break-inside:avoid}
+  .docbody h2,.docbody h3{break-after:avoid}
 }
