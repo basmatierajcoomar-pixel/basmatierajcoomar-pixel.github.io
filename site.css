@@ -694,8 +694,64 @@ details.tv[open] > summary::before{content:"\2212"}
 details.tv > summary:hover{color:var(--accent)}
 details.tv[open]{padding-bottom:1rem}
 
+/* ------------------------------------------------- figure strip ----
+   Six real figures, lifted out of the pieces they belong to and shown
+   at a uniform tile height. Each keeps its own colour variables, which
+   the build writes into a scope named for the tile. */
+.figstrip{
+  display:grid;gap:1px;background:var(--rule);
+  border:1px solid var(--rule);
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));
+}
+a.figtile{
+  background:var(--paper);display:flex;flex-direction:column;
+  text-decoration:none;color:inherit;padding:1rem 1rem .9rem;
+  transition:background .18s ease;min-width:0;
+}
+a.figtile:hover{background:var(--panel)}
+a.figtile:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+.ft-frame{
+  display:block;height:11rem;overflow:hidden;
+  border-bottom:1px solid var(--rule);padding-bottom:.85rem;margin-bottom:.75rem;
+}
+.ft-frame svg{width:100%;height:100%;display:block}
+.ft-cap{display:block;min-width:0}
+.ft-cap b{
+  display:block;font-size:.9375rem;font-weight:600;letter-spacing:-.012em;
+  line-height:1.3;color:var(--ink);
+}
+.ft-cap > span{
+  display:block;margin-top:.25rem;font-size:.75rem;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-3);font-weight:600;
+}
+a.figtile:hover .ft-cap b{color:var(--accent)}
+
+/* --------------------------------------------- affiliation lockup --
+   Set in type rather than reproducing the university's own mark: the
+   official logo is a trademark reserved for university communications,
+   and this says the same thing without implying an endorsement. */
+.namerow{display:flex;flex-wrap:wrap;align-items:center;gap:1.25rem 2rem}
+.affil{display:flex;align-items:stretch;gap:.75rem}
+.affil-bar{
+  width:4px;flex:none;background:var(--uw-gold);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--uw-gold) 60%, black 12%);
+}
+.affil-txt{display:flex;flex-direction:column;justify-content:center;gap:.15rem}
+.affil-txt b{
+  font-size:.8125rem;letter-spacing:.11em;text-transform:uppercase;
+  font-weight:700;color:var(--ink);line-height:1.15;
+}
+.affil-txt span{font-size:.8125rem;color:var(--ink-2);line-height:1.2}
+:root{--uw-gold:#c8a400}
+@media (prefers-color-scheme:dark){
+  :root:where(:not([data-theme="light"])){--uw-gold:#e8c53d}
+}
+:root[data-theme="dark"]{--uw-gold:#e8c53d}
+
 @media print{
   .corpus{grid-template-columns:1fr}
+  .figstrip{grid-template-columns:1fr 1fr}
+  a.figtile{break-inside:avoid}
   .spec,.lead,.corpusfig{break-inside:avoid}
 }
 
@@ -913,3 +969,108 @@ details.cal-q .cb > *:first-child{margin-top:.8rem}
   .cal,.docbody table,.docbody pre{break-inside:avoid}
   .docbody h2,.docbody h3{break-after:avoid}
 }
+
+/* per-figure colour scopes for the strip */
+#fs-ns1 svg.draw{display:block;width:100%;height:auto;overflow:hidden;min-width:34rem}
+#fs-ns1 /* chart ink */
+.tk{fill:var(--text-muted);font-size:11px;font-family:"InterVar",sans-serif;font-variant-numeric:tabular-nums}
+#fs-ns1 .tk-lab{fill:var(--text-secondary);font-size:12px;font-family:"InterVar",sans-serif}
+#fs-ns1 .tk-val{fill:var(--text-primary);font-size:13px;font-weight:650;font-family:"InterVar",sans-serif;font-variant-numeric:tabular-nums}
+#fs-ns1 .tk-big{fill:var(--text-primary);font-size:22px;font-weight:700;font-family:"InterVar",sans-serif;letter-spacing:-.02em}
+#fs-ns1 .gridln{stroke:var(--gridline);stroke-width:1}
+#fs-ns1 .zeroln{stroke:var(--rule-strong);stroke-width:1.5}
+#fs-ns1 .m-priced{fill:var(--priced)}
+#fs-ns1 .m-harm{fill:var(--harm)}
+#fs-ns1 .m-solid{fill:var(--counted)}
+#fs-ns1 .leader{stroke:var(--text-secondary);stroke-width:1;fill:none}
+#fs-ns2 svg.draw{display:block;width:100%;height:auto;overflow:hidden;min-width:34rem}
+#fs-ns2 /* chart ink */
+.tk{fill:var(--text-muted);font-size:11px;font-family:"InterVar",sans-serif;font-variant-numeric:tabular-nums}
+#fs-ns2 .tk-lab{fill:var(--text-secondary);font-size:12px;font-family:"InterVar",sans-serif}
+#fs-ns2 .tk-val{fill:var(--text-primary);font-size:13px;font-weight:650;font-family:"InterVar",sans-serif;font-variant-numeric:tabular-nums}
+#fs-ns2 .tk-big{fill:var(--text-primary);font-size:22px;font-weight:700;font-family:"InterVar",sans-serif;letter-spacing:-.02em}
+#fs-ns2 .gridln{stroke:var(--gridline);stroke-width:1}
+#fs-ns2 .axisln{stroke:var(--baseline);stroke-width:1}
+#fs-ns2 .zeroln{stroke:var(--rule-strong);stroke-width:1.5}
+#fs-ns2 .m-priced{fill:var(--priced)}
+#fs-ns2 .m-harm{fill:var(--harm)}
+#fs-ns2 .m-ink{fill:var(--text-secondary)}
+#fs-ns2 /* an absence, #fs-ns2 drawn at the size the quantity would occupy if it existed */
+.aperture{fill:none;stroke:var(--text-primary);stroke-width:1.5;stroke-dasharray:none}
+#fs-ns2 .leader{stroke:var(--text-secondary);stroke-width:1;fill:none}
+#fs-gs /* The drawing is never scaled: fixed px width, #fs-gs no percentage cap, #fs-gs because
+   a cap would quietly rescale the unit on a narrow screen. */
+svg.draw{display:block;width:300px;height:auto}
+#fs-gs svg.draw.hero{width:512px}
+#fs-gs .c-con{fill:var(--consumption)}
+#fs-gs /* household consumption, #fs-gs from F4 */
+.c-gov{fill:var(--government)}
+#fs-gs /* 3.12:1 light, #fs-gs 4.48:1 dark */
+.c-inv{fill:var(--investment)}
+#fs-gs i.c-con{background:var(--consumption)}
+#fs-gs i.c-gov{background:var(--government)}
+#fs-gs i.c-inv{background:var(--investment)}
+#fs-gs /* F5 and F6b are not lattice figures: position on a common scale is the
+   accurate encoding and the unit contract governs cells, #fs-gs not axes. */
+.dot{stroke:var(--surface-1);stroke-width:2}
+#fs-gs .grid{stroke:var(--gridline);stroke-width:1;fill:none}
+#fs-gs .grid.zero{stroke:var(--baseline);stroke-width:1.5}
+#fs-gs .axis{stroke:var(--baseline);stroke-width:1;fill:none}
+#fs-gs .tk{fill:var(--text-secondary);font-size:11px;font-variant-numeric:tabular-nums}
+#fs-gs .rowhit{fill:transparent}
+#fs-tv2 .axis{stroke:var(--baseline);stroke-width:1;fill:none}
+#fs-tv2 .gridl{stroke:var(--gridline);stroke-width:1;fill:none}
+#fs-tv2 .zero{stroke:var(--baseline);stroke-width:1.5;fill:none}
+#fs-tv2 .tk{fill:var(--text-muted);font-size:11px;font-variant-numeric:tabular-nums;
+    font-family:"InterVar","InterFallback",ui-sans-serif,system-ui,sans-serif}
+#fs-tv2 .lb-s{fill:var(--text-secondary);font-size:10.5px;
+    font-family:"InterVar","InterFallback",ui-sans-serif,system-ui,sans-serif}
+#fs-tv2 .lb-p{fill:var(--text-primary);font-size:11.5px;font-weight:640;
+    font-family:"InterVar","InterFallback",ui-sans-serif,system-ui,sans-serif}
+#fs-tv2 .val{fill:var(--text-primary);font-size:12px;font-weight:680;font-variant-numeric:tabular-nums;
+    font-family:"InterVar","InterFallback",ui-sans-serif,system-ui,sans-serif}
+#fs-tv2 .opened-a{fill:none;stroke:var(--anchor-a);stroke-width:2}
+#fs-tv2 .ringed{stroke:var(--surface-1);stroke-width:2}
+#fs-tv2 .band{fill:var(--text-primary);opacity:.055}
+#fs-tv2 .band-line{stroke:var(--text-primary);stroke-width:1;stroke-opacity:.35;fill:none}
+#fs-tv2 .leader{stroke:var(--text-secondary);stroke-width:1;fill:none}
+#fs-tv1 .axis{stroke:var(--baseline);stroke-width:1;fill:none}
+#fs-tv1 .gridl{stroke:var(--gridline);stroke-width:1;fill:none}
+#fs-tv1 .tk{fill:var(--text-muted);font-size:11px;font-variant-numeric:tabular-nums;
+    font-family:"InterVar","InterFallback",ui-sans-serif,system-ui,sans-serif}
+#fs-tv1 .lb-s{fill:var(--text-secondary);font-size:10.5px;
+    font-family:"InterVar","InterFallback",ui-sans-serif,system-ui,sans-serif}
+#fs-tv1 .lb-p{fill:var(--text-primary);font-size:11.5px;font-weight:640;
+    font-family:"InterVar","InterFallback",ui-sans-serif,system-ui,sans-serif}
+#fs-tv1 .val{fill:var(--text-primary);font-size:12px;font-weight:680;font-variant-numeric:tabular-nums;
+    font-family:"InterVar","InterFallback",ui-sans-serif,system-ui,sans-serif}
+#fs-tv1 .big{fill:var(--text-primary);font-size:26px;font-weight:720;letter-spacing:-.02em;
+    font-family:"InterVar","InterFallback",ui-sans-serif,system-ui,sans-serif}
+#fs-tv1 /* Rule 2 made literal: an open mark, #fs-tv1 at full size, #fs-tv1 never faded. */
+.opened{fill:none;stroke:var(--text-primary);stroke-width:2}
+#fs-tv1 .ringed{stroke:var(--surface-1);stroke-width:2}
+#fs-tv1 .dim{stroke:var(--text-primary);stroke-width:1.5;fill:none}
+#fs-wlc .gridl{stroke:var(--gridline);stroke-width:1;fill:none}
+#fs-wlc .rulel{stroke:var(--text-primary);stroke-width:2;fill:none}
+#fs-wlc .f-in{fill:var(--inside)}
+#fs-wlc .opened{fill:none;stroke:var(--text-primary);stroke-width:2}
+#fs-wlc .lb-s{fill:var(--text-secondary);font-size:10.5px}
+#fs-wlc .lb-p{fill:var(--text-primary);font-size:11.5px;font-weight:640}
+#fs-ns1{--counted:#14110c;--gridline:#ccc;--harm:#e34948;--priced:#2a78d6;--rule-strong:#000;--text-muted:#666;--text-primary:#000;--text-secondary:#333}
+#fs-ns2{--baseline:#999;--gridline:#ccc;--harm:#e34948;--priced:#2a78d6;--rule-strong:#000;--text-muted:#666;--text-primary:#000;--text-secondary:#333}
+#fs-gs{--baseline:#999;--consumption:#2a78d6;--government:#eb6834;--gridline:#ccc;--investment:#1baf7a;--surface-1:#fff;--text-secondary:#333}
+#fs-tv2{--anchor-a:#eb6834;--anchor-b:#2a78d6;--baseline:#999;--gridline:#ccc;--surface-1:#fff;--text-muted:#666;--text-primary:#000;--text-secondary:#333}
+#fs-tv1{--anchor-a:#eb6834;--anchor-b:#2a78d6;--baseline:#999;--gridline:#ccc;--surface-1:#fff;--text-muted:#666;--text-primary:#000;--text-secondary:#333}
+#fs-wlc{--gridline:#ccc;--inside:#2a78d6;--outside:#e34948;--text-primary:#000;--text-secondary:#333}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])) #fs-ns1{--counted:#fff;--gridline:#2c2c2a;--harm:#e66767;--priced:#3987e5;--rule-strong:#fff;--text-muted:#898781;--text-primary:#fff;--text-secondary:#c3c2b7}}
+:root[data-theme="dark"] #fs-ns1{--counted:#fff;--gridline:#2c2c2a;--harm:#e66767;--priced:#3987e5;--rule-strong:#fff;--text-muted:#898781;--text-primary:#fff;--text-secondary:#c3c2b7}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])) #fs-ns2{--baseline:#383835;--gridline:#2c2c2a;--harm:#e66767;--priced:#3987e5;--rule-strong:#fff;--text-muted:#898781;--text-primary:#fff;--text-secondary:#c3c2b7}}
+:root[data-theme="dark"] #fs-ns2{--baseline:#383835;--gridline:#2c2c2a;--harm:#e66767;--priced:#3987e5;--rule-strong:#fff;--text-muted:#898781;--text-primary:#fff;--text-secondary:#c3c2b7}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])) #fs-gs{--baseline:#383835;--consumption:#3987e5;--government:#d95926;--gridline:#2c2c2a;--investment:#199e70;--surface-1:#1a1a19;--text-secondary:#c3c2b7}}
+:root[data-theme="dark"] #fs-gs{--baseline:#383835;--consumption:#3987e5;--government:#d95926;--gridline:#2c2c2a;--investment:#199e70;--surface-1:#1a1a19;--text-secondary:#c3c2b7}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])) #fs-tv2{--anchor-a:#d95926;--anchor-b:#3987e5;--baseline:#383835;--gridline:#2c2c2a;--surface-1:#1a1a19;--text-muted:#a8a6a0;--text-primary:#ffffff;--text-secondary:#c3c2b7}}
+:root[data-theme="dark"] #fs-tv2{--anchor-a:#d95926;--anchor-b:#3987e5;--baseline:#383835;--gridline:#2c2c2a;--surface-1:#1a1a19;--text-muted:#a8a6a0;--text-primary:#ffffff;--text-secondary:#c3c2b7}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])) #fs-tv1{--anchor-a:#d95926;--anchor-b:#3987e5;--baseline:#383835;--gridline:#2c2c2a;--surface-1:#1a1a19;--text-muted:#a8a6a0;--text-primary:#ffffff;--text-secondary:#c3c2b7}}
+:root[data-theme="dark"] #fs-tv1{--anchor-a:#d95926;--anchor-b:#3987e5;--baseline:#383835;--gridline:#2c2c2a;--surface-1:#1a1a19;--text-muted:#a8a6a0;--text-primary:#ffffff;--text-secondary:#c3c2b7}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])) #fs-wlc{--gridline:#2f2f2c;--inside:#3987e5;--outside:#e66767;--text-primary:#ffffff;--text-secondary:#c7c5bd}}
+:root[data-theme="dark"] #fs-wlc{--gridline:#2f2f2c;--inside:#3987e5;--outside:#e66767;--text-primary:#ffffff;--text-secondary:#c7c5bd}

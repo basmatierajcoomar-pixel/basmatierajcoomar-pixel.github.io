@@ -1,134 +1,82 @@
-# My website
+# The portfolio site
 
-This folder **is** the website. Every file in it gets published exactly as it is.
-There is nothing to install, nothing to compile, and no command to run.
+This folder **is** the website. Every file in it is published exactly as it is.
+There is nothing to install and no command to run.
 
 Live at: `https://basmatierajcoomar-pixel.github.io`
 
 ---
 
-## The pages that hold it together
+## What is in here
 
 | File | What it is |
 |---|---|
-| `index.html` | The home page: the headline, the four statistics, the three sections, six featured pieces |
-| `research.html` | Section 1. The data essays and the primer, plus the method pieces |
-| `coursework.html` | Section 2. Everything grouped by course, with the coverage table |
-| `tools.html` | Section 3. The six interactive tools |
-| `library.html` | The full searchable, filterable list of all 21 pieces |
-| `about.html` | Bio, what the portfolio demonstrates, contact |
-| `reader.html` | Displays any `.md` file in this folder using the site's own typography |
-| `404.html` | Shown when an address does not exist |
-| `site.css` | The look of all of the above. Change a colour here and every page changes. |
-| `site.js` | The search box, the filters, the theme switch, the scroll reveals |
+| `index.html` | Home: the headline, three lifted figures, the corpus figure, selected work |
+| `research.html` | Independent research and writing |
+| `coursework.html` | Everything grouped by course, with a coverage table |
+| `afm291.html` | The AFM 291 vault hub |
+| `tools.html` | The six interactive tools |
+| `library.html` | Every piece, split into independent, personal and coursework |
+| `about.html` | About and contact |
+| `colophon.html` | How the site is built and how every number on it is measured |
+| `site.css` | The look of all of the above. One file. |
+| `site.js` | Theme toggle, search palette, library filters, the age in the first sentence |
 
-Everything else is a project. Each project is one self-contained `.html` file
-named after its web address: `skill-forge.html` is live at
-`https://basmatierajcoomar-pixel.github.io/skill-forge.html`.
-
-Projects do **not** use `site.css` or `site.js`. Each one carries its own styling
-inside itself, so changing the site's look can never break a project, and a
-broken project can never break the site.
+Everything else is a piece: one self-contained `.html` file named after its web
+address. `skill-forge.html` is live at `/skill-forge.html`. The `-fig1.png` files
+are diagrams pulled out of the Word documents during conversion; each one belongs
+to the page whose name it starts with.
 
 ---
 
-## Press `/` anywhere
+## Adding a new piece
 
-On any of the pages above, pressing the `/` key opens a search box over the page
-that finds any of the 21 pieces by title, course or topic. `Cmd + K` or
-`Ctrl + K` does the same. Arrow keys move, `Enter` opens, `Esc` closes.
+**Step 1.** Rename the file to lowercase with hyphens instead of spaces.
+`My New Thing.html` becomes `my-new-thing.html`. That becomes its web address.
 
----
+**Step 2.** On github.com, open this repository. Click **Add file**, then
+**Upload files**. Drag the file in. Scroll down, click **Commit changes**.
 
-## Adding a new project
+**Step 3.** Wait about a minute, then open `/my-new-thing.html`. It is live.
 
-**Step 1.** Rename your file to lowercase with hyphens instead of spaces.
-`My New Thing.html` becomes `my-new-thing.html`. This becomes its web address,
-so keep it short.
+It works immediately but is not *listed* anywhere yet. To get it onto the home
+page and into the library, ask Claude: *"add my-new-thing.html to my site's index
+and library."* The index pages are generated from measurements taken from the
+files themselves, so they have to be regenerated rather than hand-edited.
 
-**Step 2.** Go to your repository on github.com. Click **Add file**, then
-**Upload files**. Drag the file onto the page. Scroll down, click
-**Commit changes**.
+## Adding a note or a Word document
 
-**Step 3.** Wait about a minute, then open
-`https://basmatierajcoomar-pixel.github.io/my-new-thing.html`. It is live.
+Twenty-two pages here started as markdown notes or Word files and are converted at
+build time. To add another, send Claude the `.md` or `.docx` and say which section
+it belongs in. Do not paste the content into an HTML file by hand: the converters
+handle the callouts, the checkpoint questions, the internal note links, the tables
+and the embedded diagrams, and doing it manually loses all of them.
 
-At this point the project works but is not *listed* anywhere. To get it into the
-right section, the library and the search box, ask Claude: *"add
-my-new-thing.html to my site, it belongs under coursework for AFM 291."*
-Claude hands back the shell pages that changed and you upload those the same
-way. Tell it which section it belongs in, because that is the one thing it
-cannot work out from the file.
+## Replacing or deleting
 
-## Adding research written in Markdown
-
-**Step 1.** Upload the `.md` file exactly like any other file.
-
-**Step 2.** Link to it through the reader, not directly:
-
-```
-reader.html?doc=my-paper.md
-```
-
-A raw `.md` address makes the browser download the file instead of showing it,
-which is the reason `reader.html` exists. The reader handles headings, bold and
-italic, links, images, bullet and numbered lists, quotes, tables, code blocks
-and horizontal rules. It ignores a YAML block at the top of the file if there is
-one, and it prints the word count and a reading estimate.
-
-Ask Claude to add the link into `research.html` so the piece is listed.
-
-## Replacing a file
-
-Upload a file with the same name. GitHub overwrites it. Same one-minute wait.
-
-## Deleting a project
-
-On github.com, click the file, then the trash icon at the top right of the file
-view, then **Commit changes**. Ask Claude to regenerate the shell pages
-afterwards so it stops being listed.
+Upload a file with the same name to replace it. To delete, open the file on
+github.com, click the trash icon, then **Commit changes**. Ask Claude to
+regenerate the index pages afterwards so it stops being listed.
 
 ---
 
 ## Things that will save you a support call
 
-- **Nothing appears / an old version appears.** Wait a minute, then reload with
-  the cache bypassed: `Cmd + Shift + R`. GitHub takes 30 to 60 seconds to
-  publish, and browsers hold onto old copies.
-- **Never put a space in a filename.** Spaces turn into `%20` in the address
-  and links break. Hyphens only.
+- **Nothing appears, or an old version appears.** Wait a minute, then reload with
+  `Cmd + Shift + R`. GitHub takes 30 to 60 seconds to publish and browsers hold
+  onto old copies.
+- **Never put a space in a filename.** Spaces become `%20` and links break.
 - **Never rename `index.html`.** That file *is* the home page.
-- **Don't delete `.nojekyll` or `sw.js`.** `.nojekyll` stops GitHub from trying
-  to reinterpret your HTML. `sw.js` is what lets the installable apps be added
-  to a phone home screen.
-- **The reader only works on the published site.** Opening `reader.html` from
-  your own disk fails, because browsers refuse to let a local page read local
-  files. This is not a bug in the page.
-- **Everything here is public.** Anyone with the address can read it, and search
-  engines will index it. Do not upload anything with marks, personal
-  information, or graded work you have not submitted yet.
+- **Do not delete `.nojekyll`, `site.css`, `site.js` or `sw.js`.**
+- **Everything here is public** and search engines will index it. Do not upload
+  anything carrying marks, personal information, or graded work you have not
+  submitted yet.
 
 ---
 
-## Two things worth adding when you have them
+## How it is built
 
-- **A LinkedIn or GitHub link.** There is a place for it in the footer of every
-  page and in the contact list on `about.html`. It was left out rather than
-  guessed at. Send Claude the address and it goes in.
-- **A résumé PDF.** Upload `resume.pdf` and ask for a download link in the
-  header. It was not built as an empty button, because a link to a file that is
-  not there is worse than no link.
-
----
-
-## What this site is built on
-
-Plain HTML and CSS, served by GitHub Pages. No framework, no build step, no
-monthly cost. The counts and statistics on the pages are generated from the
-files themselves rather than typed in, so they cannot drift out of date without
-the pages being regenerated.
-
-The only outside dependency is the Inter typeface from a public CDN. If that
-ever fails, a metric-matched fallback takes over and the page does not shift.
-Everything works with JavaScript switched off: the search box and the filters
-disappear, and every link, list and page still works.
+Plain HTML, CSS and JavaScript, served as static files by GitHub Pages. No
+framework, no build step on the reader's side, no tracking and no cookies. Figures
+are static SVG, so they render with JavaScript turned off. Full detail, including
+the exact definition behind every number on the site, is on `colophon.html`.
